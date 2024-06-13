@@ -1,0 +1,36 @@
+[package]
+name = "covey_of_worlds"
+version = "0.1.0"
+edition = "2021"
+description = "" # — A description of the plugin
+repository = "" # — URL of the plugin source repository
+license = "" # — The plugin license
+keywords = [
+	"bevy",
+	"ldtk",
+] # — Keywords for the plugin. "bevy" at least is a good idea here
+categories = [
+	"game-development",
+	"game-engines",
+] # — Categories of the plugin. See the full list on crates.io.
+exclude = [
+	"assets",
+	"examples",
+] # — Files to exclude from the released package. Excluding the assets folder that you may [package]
+
+[[example]]
+name = "example"
+path = "examples/example.rs"
+
+[dependencies]
+bevy = "0.13"
+#ldtk_asset = { path = "ldtk_asset" }
+#ldtk_asset-derive = { path = "ldtk_asset-derive" }
+serde = "1.0"
+serde_json = "1.0"
+thiserror = "1.0"
+hex = "0.4"
+path-clean = "1.0"
+
+[dev-dependencies]
+bevy-inspector-egui = "0.24"
