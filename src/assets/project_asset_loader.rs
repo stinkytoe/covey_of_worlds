@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     prelude::*,
-    reflect::List,
 };
 use thiserror::Error;
 
@@ -120,7 +119,7 @@ impl AssetLoader for ProjectAssetLoader {
                     WorldChildrenToLoad::default(),
                 );
 
-                let world_label = format!("{}", ldtk_world.identifier);
+                let world_label = ldtk_world.identifier.clone();
 
                 let world_handle =
                     load_context.add_loaded_labeled_asset(world_label, world_asset.into());

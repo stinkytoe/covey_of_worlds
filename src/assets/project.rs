@@ -94,7 +94,7 @@ impl LdtkComponent<ProjectAsset> for Name {
     fn do_assign(
         commands: &mut Commands,
         entity: Entity,
-        query: &mut Query<&mut Self>,
+        _: &mut Query<&mut Self>,
         asset: &ProjectAsset,
     ) -> Result<(), LdtkComponentError> {
         let name = asset
@@ -102,11 +102,8 @@ impl LdtkComponent<ProjectAsset> for Name {
             .path()
             .ok_or(LdtkComponentError::BadPath)?
             .to_string();
-
         let component = Name::new(name);
-
         commands.entity(entity).insert(component);
-
         Ok(())
     }
 }
@@ -129,14 +126,13 @@ impl LdtkComponent<ProjectAsset> for Transform {
         commands: &mut Commands,
         entity: Entity,
         query: &mut Query<&mut Transform>,
-        asset: &ProjectAsset,
+        _: &ProjectAsset,
     ) -> Result<(), LdtkComponentError> {
         if let Ok(mut transform) = query.get_mut(entity) {
             transform.translation = Vec3::ZERO;
         } else {
             commands.entity(entity).insert(SpatialBundle::default());
         }
-
         Ok(())
     }
 }
