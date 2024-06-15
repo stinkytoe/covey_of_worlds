@@ -7,7 +7,7 @@ use crate::components::world_layout::WorldLayout;
 use crate::ldtk;
 use crate::{assets::level::LevelAsset, components::traits::LdtkComponent};
 
-use super::project::WorldChildrenToLoad;
+use super::project::LevelsToLoad;
 
 #[derive(Asset, Reflect)]
 pub struct WorldAsset {
@@ -18,7 +18,7 @@ pub struct WorldAsset {
     #[reflect(ignore)]
     pub(crate) _project: Handle<ProjectAsset>,
     pub(crate) level_handles: Vec<(String, String, Handle<LevelAsset>)>,
-    pub(crate) levels_to_load: WorldChildrenToLoad,
+    pub(crate) levels_to_load: LevelsToLoad,
 }
 
 impl WorldAsset {
@@ -26,7 +26,7 @@ impl WorldAsset {
         value: &ldtk::World,
         project: Handle<ProjectAsset>,
         level_handles: Vec<(String, String, Handle<LevelAsset>)>,
-        levels_to_load: WorldChildrenToLoad,
+        levels_to_load: LevelsToLoad,
     ) -> Self {
         Self {
             identifier: value.identifier.clone(),

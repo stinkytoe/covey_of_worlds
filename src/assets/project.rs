@@ -18,27 +18,27 @@ pub struct ProjectAsset {
     #[reflect(ignore)]
     pub(crate) self_handle: Handle<ProjectAsset>,
     pub(crate) world_handles: Vec<(String, String, Handle<WorldAsset>)>,
-    pub(crate) worlds_to_load: ProjectChildrenToLoad,
+    pub(crate) worlds_to_load: WorldsToLoad,
 }
 
 #[derive(Component, Reflect)]
-pub enum ProjectChildrenToLoad {
+pub enum WorldsToLoad {
     None,
-    ByIid(HashMap<String, WorldChildrenToLoad>),
-    All(WorldChildrenToLoad),
+    ByIid(HashMap<String, LevelsToLoad>),
+    All(LevelsToLoad),
 }
 
 impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {
     fn children(&self) -> Vec<Handle<WorldAsset>> {
         match &self.worlds_to_load {
-            ProjectChildrenToLoad::None => vec![],
-            ProjectChildrenToLoad::ByIid(ids) => self
+            WorldsToLoad::None => vec![],
+            WorldsToLoad::ByIid(ids) => self
                 .world_handles
                 .iter()
                 .filter(|(_, iid, _)| ids.contains_key(iid))
                 .map(|(_, _, handle)| handle.clone())
                 .collect(),
-            ProjectChildrenToLoad::All(_) => self
+            WorldsToLoad::All(_) => self
                 .world_handles
                 .iter()
                 .map(|(_, _, handle)| handle.clone())
@@ -47,41 +47,41 @@ impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {
     }
 }
 
-impl Default for ProjectChildrenToLoad {
+impl Default for WorldsToLoad {
     fn default() -> Self {
-        Self::All(WorldChildrenToLoad::default())
+        Self::All(LevelsToLoad::default())
     }
 }
 
 #[derive(Reflect)]
-pub enum WorldChildrenToLoad {
+pub enum LevelsToLoad {
     None,
-    ByIid(HashMap<String, LevelChildrenToLoad>),
+    ByIid(HashMap<String, LayersToLoad>),
     // #[default = LayerChildrenToLoad::default()]
-    All(LevelChildrenToLoad),
+    All(LayersToLoad),
 }
 
-impl Default for WorldChildrenToLoad {
+impl Default for LevelsToLoad {
     fn default() -> Self {
-        Self::All(LevelChildrenToLoad::default())
+        Self::All(LayersToLoad::default())
     }
 }
 
 #[derive(Reflect)]
-pub enum LevelChildrenToLoad {
+pub enum LayersToLoad {
     None,
-    ByIid(HashMap<String, LayerChildrenToLoad>),
-    All(LayerChildrenToLoad),
+    ByIid(HashMap<String, EntitiesToLoad>),
+    All(EntitiesToLoad),
 }
 
-impl Default for LevelChildrenToLoad {
+impl Default for LayersToLoad {
     fn default() -> Self {
-        Self::All(LayerChildrenToLoad::default())
+        Self::All(EntitiesToLoad::default())
     }
 }
 
 #[derive(Default, Reflect)]
-pub enum LayerChildrenToLoad {
+pub enum EntitiesToLoad {
     None,
     ByIid(Vec<String>),
     #[default]

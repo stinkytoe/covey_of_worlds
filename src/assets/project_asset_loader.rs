@@ -7,12 +7,12 @@ use bevy::{
 use thiserror::Error;
 
 use crate::{
-    assets::{project::WorldChildrenToLoad, world::WorldAsset},
+    assets::{project::LevelsToLoad, world::WorldAsset},
     ldtk,
     util::{bevy_color_from_ldtk, ColorParseError},
 };
 
-use super::project::{ProjectAsset, ProjectChildrenToLoad};
+use super::project::{ProjectAsset, WorldsToLoad};
 
 #[derive(Debug, Error)]
 pub(crate) enum ProjectAssetLoaderError {
@@ -116,7 +116,7 @@ impl AssetLoader for ProjectAssetLoader {
                     ldtk_world,
                     self_handle.clone(),
                     Vec::default(),
-                    WorldChildrenToLoad::default(),
+                    LevelsToLoad::default(),
                 );
 
                 let world_label = ldtk_world.identifier.clone();
@@ -138,7 +138,7 @@ impl AssetLoader for ProjectAssetLoader {
                 json_version: value.json_version.clone(),
                 self_handle,
                 world_handles,
-                worlds_to_load: ProjectChildrenToLoad::default(),
+                worlds_to_load: WorldsToLoad::default(),
             })
         })
     }
