@@ -77,7 +77,7 @@ where
         children_query: Query<(Entity, &Handle<Child>)>,
         self_assets: Res<Assets<Self>>,
     ) -> Result<(), LdtkAssetChildLoaderError> {
-        for LdtkAssetLoadEvent { handle, .. } in events.read() {
+        for LdtkAssetLoadEvent { entity, handle } in events.read() {
             let mut children = self_assets
                 .get(handle)
                 .ok_or(LdtkAssetChildLoaderError::BadHandle)?
@@ -91,9 +91,11 @@ where
                 }
             }
 
-            for handle in children.iter() {
-                commands.spawn(handle.clone());
-            }
+            commands.entity(*entity).with_children(|parent| {
+                for handle in children.iter() {
+                    parent.spawn(handle.clone());
+                }
+            });
         }
 
         Ok(())

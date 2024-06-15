@@ -7,6 +7,7 @@ use crate::{
         project::ProjectAsset,
         project_asset_loader::ProjectAssetLoader,
         traits::{LdtkAsset, LdtkAssetChildLoader, LdtkAssetLoadEvent},
+        world::WorldAsset,
     },
     components::{iid::Iid, tileset_rectangle::TilesetRectangle, traits::LdtkComponent},
 };
@@ -32,6 +33,21 @@ impl Plugin for CoveyOfWorldsPlugin {
                     ProjectAsset::on_modified_system,
                     ProjectAsset::with_load_stub_system,
                     ProjectAsset::load_children_system.map(error),
+                ),
+            );
+
+        app //
+            .init_asset::<WorldAsset>()
+            .add_event::<LdtkAssetLoadEvent<WorldAsset>>()
+            .register_asset_reflect::<WorldAsset>()
+            .add_systems(
+                Update,
+                (
+                    <Name as LdtkComponent<WorldAsset>>::on_ldtk_asset_event_system.map(error),
+                    WorldAsset::on_create_system,
+                    WorldAsset::on_modified_system,
+                    WorldAsset::with_load_stub_system,
+                    // WorldAsset::load_children_system.map(error),
                 ),
             );
 

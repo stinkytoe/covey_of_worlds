@@ -3,10 +3,12 @@ use std::path::PathBuf;
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     prelude::*,
+    reflect::List,
 };
 use thiserror::Error;
 
 use crate::{
+    assets::{project::WorldChildrenToLoad, world::WorldAsset},
     ldtk,
     util::{bevy_color_from_ldtk, ColorParseError},
 };
@@ -41,8 +43,8 @@ pub(crate) enum ProjectAssetLoaderError {
     // ExternalRelPathIsNone,
     // #[error("tile instances in entity type layer!")]
     // NonTileLayerWithTiles,
-    // #[error("Value is None in a single world project?")]
-    // ValueMissingInSingleWorld,
+    #[error("Value is None in a single world project?")]
+    ValueMissingInSingleWorld,
     // #[error("Layer Instances is None in a non-external levels project?")]
     // LayerInstancesIsNone,
     // #[error("Int Grid/Auto Layer should only have auto tiles!")]
@@ -85,13 +87,58 @@ impl AssetLoader for ProjectAssetLoader {
                 serde_json::from_slice(&bytes)?
             };
 
+            let ldtk_worlds = if value.worlds.is_empty() {
+                vec![ldtk::World {
+                    default_level_height: value
+                        .default_level_height
+                        .ok_or(ProjectAssetLoaderError::ValueMissingInSingleWorld)?,
+                    default_level_width: value
+                        .default_level_width
+                        .ok_or(ProjectAssetLoaderError::ValueMissingInSingleWorld)?,
+                    identifier: "World".into(),
+                    iid: value.iid.clone(),
+                    levels: value.levels,
+                    world_grid_height: value
+                        .world_grid_height
+                        .ok_or(ProjectAssetLoaderError::ValueMissingInSingleWorld)?,
+                    world_grid_width: value
+                        .world_grid_width
+                        .ok_or(ProjectAssetLoaderError::ValueMissingInSingleWorld)?,
+                    world_layout: value.world_layout,
+                }]
+            } else {
+                value.worlds
+            };
+
+            let mut world_handles = Vec::new();
+
+            for ldtk_world in ldtk_worlds.iter() {
+                let world_asset = WorldAsset::new(
+                    ldtk_world,
+                    self_handle.clone(),
+                    Vec::default(),
+                    WorldChildrenToLoad::default(),
+                );
+
+                let world_label = format!("{}", ldtk_world.identifier);
+
+                let world_handle =
+                    load_context.add_loaded_labeled_asset(world_label, world_asset.into());
+
+                world_handles.push((
+                    ldtk_world.identifier.clone(),
+                    ldtk_world.iid.clone(),
+                    world_handle,
+                ));
+            }
+
             Ok(ProjectAsset {
                 bg_color: bevy_color_from_ldtk(&value.bg_color)?,
                 external_levels: value.external_levels,
                 iid: value.iid.clone(),
                 json_version: value.json_version.clone(),
                 self_handle,
-                world_handles: Vec::default(),
+                world_handles,
                 worlds_to_load: ProjectChildrenToLoad::default(),
             })
         })
