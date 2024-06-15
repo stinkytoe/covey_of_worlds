@@ -1,4 +1,3 @@
-use bevy::ecs::system::SystemParam;
 use bevy::log::Level;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
@@ -24,13 +23,9 @@ fn main() {
         .run();
 }
 
-fn startup(
-    mut commands: Commands,
-    mut ldtk_commands: LdtkProjectCommands,
-    asset_server: Res<AssetServer>,
-) {
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    // commands.spawn(asset_server.load::<ProjectAsset>("ldtk/top_down.ldtk"));
+    commands.spawn(asset_server.load::<ProjectAsset>("ldtk/top_down.ldtk"));
 }
 
 fn update() {}

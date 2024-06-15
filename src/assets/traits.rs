@@ -1,5 +1,6 @@
 use bevy::asset::LoadState;
 use bevy::prelude::*;
+use thiserror::Error;
 
 #[derive(Component)]
 pub struct LoadStub;
@@ -31,7 +32,7 @@ where
     ) {
         for event in asset_event_reader.read() {
             if let AssetEvent::Modified { id } = event {
-                if let Some((entity, _)) = query.iter().find(|(_, handle)| handle.id() == *id) {
+                for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
                     commands.entity(entity).insert(LoadStub);
                 }
             };
@@ -57,4 +58,46 @@ where
             }
         }
     }
+}
+
+#[derive(Debug, Error)]
+pub(crate) enum LdtkAssetChildLoaderError {
+    #[error("Bad handle?")]
+    BadHandle,
+}
+
+pub(crate) trait LdtkAssetChildLoader<Child>
+where
+    Child: LdtkAsset,
+    Self: LdtkAsset,
+{
+    fn load_children_system(
+        mut commands: Commands,
+        mut events: EventReader<LdtkAssetLoadEvent<Self>>,
+        children_query: Query<(Entity, &Handle<Child>)>,
+        self_assets: Res<Assets<Self>>,
+    ) -> Result<(), LdtkAssetChildLoaderError> {
+        for LdtkAssetLoadEvent { handle, .. } in events.read() {
+            let mut children = self_assets
+                .get(handle)
+                .ok_or(LdtkAssetChildLoaderError::BadHandle)?
+                .children();
+
+            for (entity, handle) in children_query.iter() {
+                if !children.contains(handle) {
+                    commands.entity(entity).despawn_recursive();
+                } else {
+                    children.retain(|inner_handle| inner_handle != handle);
+                }
+            }
+
+            for handle in children.iter() {
+                commands.spawn(handle.clone());
+            }
+        }
+
+        Ok(())
+    }
+
+    fn children(&self) -> Vec<Handle<Child>>;
 }

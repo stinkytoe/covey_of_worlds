@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     prelude::*,
@@ -9,7 +11,7 @@ use crate::{
     util::{bevy_color_from_ldtk, ColorParseError},
 };
 
-use super::project::ProjectAsset;
+use super::project::{ProjectAsset, ProjectChildrenToLoad};
 
 #[derive(Debug, Error)]
 pub(crate) enum ProjectAssetLoaderError {
@@ -33,8 +35,8 @@ pub(crate) enum ProjectAssetLoaderError {
     // LayerDefinitionFromError(#[from] LayerDefinitionFromError),
     // #[error(transparent)]
     // EntityDefinitionFromError(#[from] EntityDefinitionFromError),
-    // #[error("Could not get project directory? {0}")]
-    // BadProjectDirectory(PathBuf),
+    #[error("Could not get project directory? {0}")]
+    BadProjectDirectory(PathBuf),
     // #[error("externalRelPath is None when external levels is true?")]
     // ExternalRelPathIsNone,
     // #[error("tile instances in entity type layer!")]
@@ -64,13 +66,24 @@ impl AssetLoader for ProjectAssetLoader {
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> bevy::utils::BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
+            let asset_path = load_context.path().to_path_buf();
+
+            let self_handle = load_context.load(asset_path.clone());
+
+            info!("Loading LDtk project file: {asset_path:?}");
+
+            let base_directory = asset_path
+                .parent()
+                .ok_or(ProjectAssetLoaderError::BadProjectDirectory(
+                    asset_path.clone(),
+                ))?
+                .to_path_buf();
+
             let value: ldtk::LdtkJson = {
                 let mut bytes = Vec::new();
                 reader.read_to_end(&mut bytes).await?;
                 serde_json::from_slice(&bytes)?
             };
-
-            let self_handle = load_context.load(load_context.path().to_path_buf());
 
             Ok(ProjectAsset {
                 bg_color: bevy_color_from_ldtk(&value.bg_color)?,
@@ -78,6 +91,8 @@ impl AssetLoader for ProjectAssetLoader {
                 iid: value.iid.clone(),
                 json_version: value.json_version.clone(),
                 self_handle,
+                world_handles: Vec::default(),
+                worlds_to_load: ProjectChildrenToLoad::default(),
             })
         })
     }

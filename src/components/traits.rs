@@ -11,6 +11,8 @@ pub(crate) enum LdtkComponentError {
     // TryFromLdtkAsset,
     #[error("Bad handle?")]
     BadHandle,
+    #[error("Bad path?")]
+    BadPath,
 }
 
 pub(crate) trait LdtkComponent<A>

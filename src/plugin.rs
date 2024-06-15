@@ -6,7 +6,7 @@ use crate::{
         entity::EntityAsset,
         project::ProjectAsset,
         project_asset_loader::ProjectAssetLoader,
-        traits::{LdtkAsset, LdtkAssetLoadEvent},
+        traits::{LdtkAsset, LdtkAssetChildLoader, LdtkAssetLoadEvent},
     },
     components::{iid::Iid, tileset_rectangle::TilesetRectangle, traits::LdtkComponent},
 };
@@ -24,12 +24,14 @@ impl Plugin for CoveyOfWorldsPlugin {
             .add_systems(
                 Update,
                 (
+                    <Name as LdtkComponent<ProjectAsset>>::on_ldtk_asset_event_system.map(error),
                     <Iid as LdtkComponent<ProjectAsset>>::on_ldtk_asset_event_system.map(error),
                     <Transform as LdtkComponent<ProjectAsset>>::on_ldtk_asset_event_system
                         .map(error),
                     ProjectAsset::on_create_system,
                     ProjectAsset::on_modified_system,
                     ProjectAsset::with_load_stub_system,
+                    ProjectAsset::load_children_system.map(error),
                 ),
             );
 
