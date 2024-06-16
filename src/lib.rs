@@ -1,3 +1,4 @@
+mod defs;
 mod exports;
 mod ldtk;
 mod plugin;

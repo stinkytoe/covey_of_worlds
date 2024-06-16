@@ -10,8 +10,8 @@ pub struct ReferenceToAnEntityInstance {
     pub world_iid: String,
 }
 
-impl From<&ldtk::ReferenceToAnEntityInstance> for ReferenceToAnEntityInstance {
-    fn from(value: &ldtk::ReferenceToAnEntityInstance) -> Self {
+impl ReferenceToAnEntityInstance {
+    pub(crate) fn new(value: &ldtk::ReferenceToAnEntityInstance) -> Self {
         Self {
             entity_iid: value.entity_iid.clone(),
             layer_iid: value.layer_iid.clone(),

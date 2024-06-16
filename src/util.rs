@@ -56,7 +56,7 @@ pub enum AnchorIntoError {
     _BadArrayLength,
 }
 
-pub(crate) fn _bevy_anchor_from_ldtk(pivot: &[f64]) -> Result<Anchor, AnchorIntoError> {
+pub(crate) fn bevy_anchor_from_ldtk(pivot: &[f64]) -> Result<Anchor, AnchorIntoError> {
     if pivot.len() != 2 {
         return Err(AnchorIntoError::_BadArrayLength);
     }

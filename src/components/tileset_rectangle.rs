@@ -9,7 +9,6 @@ pub struct TilesetRectangle {
     pub tileset_uid: i64,
 }
 
-// impl From<&ldtk::TilesetRectangle> for TilesetRectangle {
 impl TilesetRectangle {
     pub(crate) fn new(value: &ldtk::TilesetRectangle) -> Self {
         Self {

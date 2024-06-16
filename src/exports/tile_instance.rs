@@ -12,7 +12,6 @@ pub struct TileInstance {
     pub tileset_id: i64,
 }
 
-// impl From<&ldtk::TileInstance> for Tile {
 impl TileInstance {
     fn new(value: &ldtk::TileInstance) -> Self {
         Self {

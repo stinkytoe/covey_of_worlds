@@ -10,7 +10,6 @@ pub struct LevelBackgroundPosition {
     pub top_left: Vec2,
 }
 
-// impl From<&ldtk::LevelBackgroundPosition> for LevelBackgroundPosition {
 impl LevelBackgroundPosition {
     fn new(value: &ldtk::LevelBackgroundPosition) -> Self {
         let crop_top_left = (value.crop_rect[0] as f32, value.crop_rect[1] as f32).into();

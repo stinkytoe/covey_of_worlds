@@ -84,10 +84,8 @@ impl From<FieldInstance> for FieldInstanceValue {
 // { "__identifier": "Integer2", "__type": "Array<Int>", "__value": [], "__tile": null, "defUid": 326, "realEditorValues": [] },
 // { "__identifier": "Float2", "__type": "Array<Float>", "__value": [], "__tile": null, "defUid": 327, "realEditorValues": [] }
 
-impl TryFrom<&ldtk::FieldInstance> for FieldInstance {
-    type Error = FieldInstanceValueParseError;
-
-    fn try_from(value: &ldtk::FieldInstance) -> Result<Self, Self::Error> {
+impl FieldInstance {
+    pub(crate) fn new(value: &ldtk::FieldInstance) -> Result<Self, FieldInstanceValueParseError> {
         Ok(Self {
             identifier: value.identifier.clone(),
             tile: value.tile.as_ref().map(TilesetRectangle::new),
