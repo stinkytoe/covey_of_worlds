@@ -11,7 +11,7 @@ use crate::ldtk;
 
 use super::level::LayersToLoad;
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Debug, Reflect)]
 pub struct WorldAsset {
     pub identifier: String,
     pub iid: String,
@@ -42,7 +42,7 @@ impl WorldAsset {
     }
 }
 
-#[derive(Reflect)]
+#[derive(Debug, Reflect)]
 pub enum LevelsToLoad {
     None,
     ByIid(HashMap<String, LayersToLoad>),

@@ -1,4 +1,4 @@
 use bevy::prelude::*;
 
-#[derive(Component, Reflect)]
+#[derive(Component, Debug, Reflect)]
 pub struct Iid(pub String);

@@ -31,7 +31,7 @@ impl LayerType {
     }
 }
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Debug, Reflect)]
 pub struct LayerAsset {
     // from LDtk
     pub grid_size: I64Vec2,
@@ -92,7 +92,7 @@ impl LayerAsset {
     //     })
     // }
 }
-#[derive(Default, Reflect)]
+#[derive(Default, Debug, Reflect)]
 pub enum EntitiesToLoad {
     None,
     ByIid(Vec<String>),

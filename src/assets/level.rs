@@ -11,7 +11,7 @@ use super::{
     traits::LdtkAsset,
 };
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Debug, Reflect)]
 pub struct LevelAsset {
     pub bg_color: Color,
     pub bg_pos: Option<LevelBackgroundPosition>,
@@ -30,7 +30,7 @@ pub struct LevelAsset {
     pub(crate) layers_to_load: LayersToLoad,
 }
 
-#[derive(Reflect)]
+#[derive(Debug, Reflect)]
 pub enum LayersToLoad {
     None,
     ByIid(HashMap<String, EntitiesToLoad>),

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::fmt::Debug;
 use thiserror::Error;
 
 use crate::assets::traits::{LdtkAsset, LdtkAssetLoadEvent};
@@ -16,7 +17,7 @@ pub(crate) enum LdtkComponentError {
 pub(crate) trait LdtkComponent<A>
 where
     A: LdtkAsset,
-    Self: Component + Sized,
+    Self: Component + Debug + Sized,
 {
     fn on_ldtk_asset_event_system(
         mut commands: Commands,

@@ -1,5 +1,6 @@
 use bevy::asset::LoadState;
 use bevy::prelude::*;
+use std::fmt::Debug;
 use thiserror::Error;
 
 #[derive(Component)]
@@ -13,7 +14,7 @@ pub struct LdtkAssetLoadEvent<T: LdtkAsset> {
 
 pub trait LdtkAsset
 where
-    Self: Asset + Sized,
+    Self: Asset + Debug + Sized,
 {
     fn on_create_system(
         mut commands: Commands,

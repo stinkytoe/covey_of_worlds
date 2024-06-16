@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::ldtk;
 
-#[derive(Clone, Component, Reflect)]
+#[derive(Clone, Component, Debug, Reflect)]
 pub struct TilesetRectangle {
     pub location: Vec2,
     pub size: Vec2,

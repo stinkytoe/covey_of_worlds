@@ -9,7 +9,7 @@ use crate::components::iid::Iid;
 use crate::components::traits::LdtkComponent;
 use crate::components::traits::LdtkComponentError;
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Debug, Reflect)]
 pub struct ProjectAsset {
     pub bg_color: Color,
     pub external_levels: bool,
@@ -21,7 +21,7 @@ pub struct ProjectAsset {
     pub(crate) worlds_to_load: WorldsToLoad,
 }
 
-#[derive(Reflect)]
+#[derive(Debug, Reflect)]
 pub enum WorldsToLoad {
     None,
     ByIid(HashMap<String, LevelsToLoad>),

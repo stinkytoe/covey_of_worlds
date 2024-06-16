@@ -8,7 +8,7 @@ use crate::components::tileset_rectangle::TilesetRectangle;
 use crate::components::traits::LdtkComponent;
 use crate::exports::field_instance::FieldInstance;
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Debug, Reflect)]
 pub struct EntityAsset {
     pub grid: IVec2,
     pub identifier: String,

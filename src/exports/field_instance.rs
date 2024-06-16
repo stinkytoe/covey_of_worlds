@@ -29,7 +29,7 @@ pub enum FieldInstanceValueAsTileError {
     WrongType,
 }
 
-#[derive(Clone, Reflect)]
+#[derive(Clone, Debug, Reflect)]
 // TODO: fill me out!
 pub enum FieldInstanceValue {
     Int(i64),
@@ -46,7 +46,7 @@ pub enum FieldInstanceValue {
     // Array(Vec<FieldInstanceValue>),
 }
 
-#[derive(Clone, Reflect)]
+#[derive(Clone, Debug, Reflect)]
 pub struct FieldInstance {
     pub identifier: String,
     pub tile: Option<TilesetRectangle>,
