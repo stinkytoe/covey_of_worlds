@@ -1,14 +1,23 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
-use super::project::ProjectAsset;
+use crate::{
+    components::field_instances::FieldInstances,
+    exports::{level_background_position::LevelBackgroundPosition, neighbors::Neighbour},
+};
 
-#[derive(Asset, Debug, Reflect)]
+use super::{
+    layer::{EntitiesToLoad, LayerAsset},
+    project::ProjectAsset,
+    traits::LdtkAsset,
+};
+
+#[derive(Asset, Reflect)]
 pub struct LevelAsset {
     pub bg_color: Color,
-    // pub bg_pos: Option<LevelBackgroundPosition>,
-    // pub neighbours: Neighbours,
-    // pub bg_rel_path: Option<PathBuf>,
-    // pub field_instances: FieldInstances,
+    pub bg_pos: Option<LevelBackgroundPosition>,
+    pub neighbours: Vec<Neighbour>,
+    pub bg_rel_path: Option<String>,
+    pub field_instances: FieldInstances,
     pub identifier: String,
     pub iid: String,
     pub size: Vec2,
@@ -16,7 +25,22 @@ pub struct LevelAsset {
     // In Bevy coordinate system, not necessarily the same as Bevy transform!
     pub world_location: Vec3,
     #[reflect(ignore)]
-    pub project: Handle<ProjectAsset>,
-    // pub layer_assets_by_identifier: HashMap<String, Handle<LayerAsset>>,
-    // pub layer_assets_by_iid: HashMap<String, Handle<LayerAsset>>,
+    pub(crate) _project: Handle<ProjectAsset>,
+    pub(crate) layer_handles: Vec<(String, String, Handle<LayerAsset>)>,
+    pub(crate) layers_to_load: LayersToLoad,
 }
+
+#[derive(Reflect)]
+pub enum LayersToLoad {
+    None,
+    ByIid(HashMap<String, EntitiesToLoad>),
+    All(EntitiesToLoad),
+}
+
+impl Default for LayersToLoad {
+    fn default() -> Self {
+        Self::All(EntitiesToLoad::default())
+    }
+}
+
+impl LdtkAsset for LevelAsset {}

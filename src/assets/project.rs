@@ -2,12 +2,12 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 
 use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetChildLoader;
+use crate::assets::world::LevelsToLoad;
+use crate::assets::world::WorldAsset;
 use crate::components::iid::Iid;
 use crate::components::traits::LdtkComponent;
 use crate::components::traits::LdtkComponentError;
-
-use super::traits::LdtkAssetChildLoader;
-use super::world::WorldAsset;
 
 #[derive(Asset, Reflect)]
 pub struct ProjectAsset {
@@ -21,11 +21,17 @@ pub struct ProjectAsset {
     pub(crate) worlds_to_load: WorldsToLoad,
 }
 
-#[derive(Component, Reflect)]
+#[derive(Reflect)]
 pub enum WorldsToLoad {
     None,
     ByIid(HashMap<String, LevelsToLoad>),
     All(LevelsToLoad),
+}
+
+impl Default for WorldsToLoad {
+    fn default() -> Self {
+        Self::All(LevelsToLoad::default())
+    }
 }
 
 impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {
@@ -45,47 +51,6 @@ impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {
                 .collect(),
         }
     }
-}
-
-impl Default for WorldsToLoad {
-    fn default() -> Self {
-        Self::All(LevelsToLoad::default())
-    }
-}
-
-#[derive(Reflect)]
-pub enum LevelsToLoad {
-    None,
-    ByIid(HashMap<String, LayersToLoad>),
-    // #[default = LayerChildrenToLoad::default()]
-    All(LayersToLoad),
-}
-
-impl Default for LevelsToLoad {
-    fn default() -> Self {
-        Self::All(LayersToLoad::default())
-    }
-}
-
-#[derive(Reflect)]
-pub enum LayersToLoad {
-    None,
-    ByIid(HashMap<String, EntitiesToLoad>),
-    All(EntitiesToLoad),
-}
-
-impl Default for LayersToLoad {
-    fn default() -> Self {
-        Self::All(EntitiesToLoad::default())
-    }
-}
-
-#[derive(Default, Reflect)]
-pub enum EntitiesToLoad {
-    None,
-    ByIid(Vec<String>),
-    #[default]
-    All,
 }
 
 impl LdtkAsset for ProjectAsset {}

@@ -15,9 +15,9 @@ fn main() {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-            WorldInspectorPlugin::default(),
             CoveyOfWorldsPlugin,
         ))
+        .add_plugins(WorldInspectorPlugin::default())
         .add_systems(Startup, startup)
         .add_systems(Update, update)
         .run();

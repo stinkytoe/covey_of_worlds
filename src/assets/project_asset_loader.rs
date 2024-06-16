@@ -7,7 +7,7 @@ use bevy::{
 use thiserror::Error;
 
 use crate::{
-    assets::{project::LevelsToLoad, world::WorldAsset},
+    assets::world::{LevelsToLoad, WorldAsset},
     ldtk,
     util::{bevy_color_from_ldtk, ColorParseError},
 };
@@ -73,7 +73,7 @@ impl AssetLoader for ProjectAssetLoader {
 
             info!("Loading LDtk project file: {asset_path:?}");
 
-            let base_directory = asset_path
+            let _base_directory = asset_path
                 .parent()
                 .ok_or(ProjectAssetLoaderError::BadProjectDirectory(
                     asset_path.clone(),

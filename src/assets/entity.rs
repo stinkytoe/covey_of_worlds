@@ -1,16 +1,29 @@
 use bevy::prelude::*;
+use bevy::sprite::Anchor;
 
 use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
 use crate::components::iid::Iid;
 use crate::components::tileset_rectangle::TilesetRectangle;
 use crate::components::traits::LdtkComponent;
+use crate::exports::field_instance::FieldInstance;
 
 #[derive(Asset, Reflect)]
 pub struct EntityAsset {
-    pub project_handle: Handle<ProjectAsset>,
-    pub iid: String,
+    pub grid: IVec2,
+    pub identifier: String,
+    pub anchor: Anchor,
+    pub smart_color: Color,
+    pub tags: Vec<String>,
     pub tile: Option<TilesetRectangle>,
+    pub world_location: Option<Vec2>,
+    pub def_uid: i64,
+    pub field_instances: Vec<FieldInstance>,
+    pub size: Vec2,
+    pub iid: String,
+    pub location: Vec2,
+    #[reflect(ignore)]
+    pub project: Handle<ProjectAsset>,
 }
 
 impl LdtkAsset for EntityAsset {}

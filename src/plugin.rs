@@ -1,16 +1,18 @@
 use bevy::prelude::*;
 use bevy::utils::error;
 
-use crate::{
-    assets::{
-        entity::EntityAsset,
-        project::ProjectAsset,
-        project_asset_loader::ProjectAssetLoader,
-        traits::{LdtkAsset, LdtkAssetChildLoader, LdtkAssetLoadEvent},
-        world::WorldAsset,
-    },
-    components::{iid::Iid, tileset_rectangle::TilesetRectangle, traits::LdtkComponent},
-};
+use crate::assets::entity::EntityAsset;
+use crate::assets::layer::LayerAsset;
+use crate::assets::level::LevelAsset;
+use crate::assets::project::ProjectAsset;
+use crate::assets::project_asset_loader::ProjectAssetLoader;
+use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetChildLoader;
+use crate::assets::traits::LdtkAssetLoadEvent;
+use crate::assets::world::WorldAsset;
+use crate::components::iid::Iid;
+use crate::components::tileset_rectangle::TilesetRectangle;
+use crate::components::traits::LdtkComponent;
 
 pub struct CoveyOfWorldsPlugin;
 
@@ -50,6 +52,16 @@ impl Plugin for CoveyOfWorldsPlugin {
                     // WorldAsset::load_children_system.map(error),
                 ),
             );
+
+        app //
+            .init_asset::<LevelAsset>()
+            .add_event::<LdtkAssetLoadEvent<LevelAsset>>()
+            .register_asset_reflect::<LevelAsset>();
+
+        app //
+            .init_asset::<LayerAsset>()
+            .add_event::<LdtkAssetLoadEvent<LayerAsset>>()
+            .register_asset_reflect::<LayerAsset>();
 
         app //
             .init_asset::<EntityAsset>()

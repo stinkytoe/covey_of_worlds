@@ -1,13 +1,15 @@
 use bevy::math::I64Vec2;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 
+use crate::assets::level::LevelAsset;
 use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
-use crate::components::world_layout::WorldLayout;
+use crate::components::traits::LdtkComponent;
+use crate::exports::world_layout::WorldLayout;
 use crate::ldtk;
-use crate::{assets::level::LevelAsset, components::traits::LdtkComponent};
 
-use super::project::LevelsToLoad;
+use super::level::LayersToLoad;
 
 #[derive(Asset, Reflect)]
 pub struct WorldAsset {
@@ -22,7 +24,7 @@ pub struct WorldAsset {
 }
 
 impl WorldAsset {
-    pub fn new(
+    pub(crate) fn new(
         value: &ldtk::World,
         project: Handle<ProjectAsset>,
         level_handles: Vec<(String, String, Handle<LevelAsset>)>,
@@ -40,6 +42,19 @@ impl WorldAsset {
     }
 }
 
+#[derive(Reflect)]
+pub enum LevelsToLoad {
+    None,
+    ByIid(HashMap<String, LayersToLoad>),
+    // #[default = LayerChildrenToLoad::default()]
+    All(LayersToLoad),
+}
+
+impl Default for LevelsToLoad {
+    fn default() -> Self {
+        Self::All(LayersToLoad::default())
+    }
+}
 impl LdtkAsset for WorldAsset {}
 
 impl LdtkComponent<WorldAsset> for Name {

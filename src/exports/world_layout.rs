@@ -1,5 +1,4 @@
 use crate::ldtk;
-// use bevy::prelude::*;
 use bevy::reflect::impl_reflect;
 
 // Re-export

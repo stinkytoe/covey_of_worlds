@@ -6,7 +6,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-pub(crate) fn ldtk_path_to_asset_path(base_directory: &Path, ldtk_path: &Path) -> PathBuf {
+pub(crate) fn _ldtk_path_to_asset_path(base_directory: &Path, ldtk_path: &Path) -> PathBuf {
     base_directory.join(ldtk_path).clean()
 }
 
@@ -53,12 +53,12 @@ pub(crate) fn bevy_color_from_ldtk(color: &str) -> Result<Color, ColorParseError
 #[derive(Debug, Error)]
 pub enum AnchorIntoError {
     #[error("Provided array not four numbers!")]
-    BadArrayLength,
+    _BadArrayLength,
 }
 
-pub(crate) fn bevy_anchor_from_ldtk(pivot: &[f64]) -> Result<Anchor, AnchorIntoError> {
+pub(crate) fn _bevy_anchor_from_ldtk(pivot: &[f64]) -> Result<Anchor, AnchorIntoError> {
     if pivot.len() != 2 {
-        return Err(AnchorIntoError::BadArrayLength);
+        return Err(AnchorIntoError::_BadArrayLength);
     }
 
     Ok(match (pivot[0] as f32, pivot[1] as f32) {
