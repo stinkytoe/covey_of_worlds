@@ -46,17 +46,31 @@ impl Plugin for CoveyOfWorldsPlugin {
                 Update,
                 (
                     <Name as LdtkComponent<WorldAsset>>::on_ldtk_asset_event_system.map(error),
+                    <Iid as LdtkComponent<WorldAsset>>::on_ldtk_asset_event_system.map(error),
+                    <Transform as LdtkComponent<WorldAsset>>::on_ldtk_asset_event_system.map(error),
                     WorldAsset::on_create_system,
                     WorldAsset::on_modified_system,
                     WorldAsset::with_load_stub_system,
-                    // WorldAsset::load_children_system.map(error),
+                    WorldAsset::load_children_system.map(error),
                 ),
             );
 
         app //
             .init_asset::<LevelAsset>()
             .add_event::<LdtkAssetLoadEvent<LevelAsset>>()
-            .register_asset_reflect::<LevelAsset>();
+            .register_asset_reflect::<LevelAsset>()
+            .add_systems(
+                Update,
+                (
+                    <Name as LdtkComponent<LevelAsset>>::on_ldtk_asset_event_system.map(error),
+                    <Iid as LdtkComponent<LevelAsset>>::on_ldtk_asset_event_system.map(error),
+                    <Transform as LdtkComponent<LevelAsset>>::on_ldtk_asset_event_system.map(error),
+                    LevelAsset::on_create_system,
+                    LevelAsset::on_modified_system,
+                    LevelAsset::with_load_stub_system,
+                    LevelAsset::load_children_system.map(error),
+                ),
+            );
 
         app //
             .init_asset::<LayerAsset>()

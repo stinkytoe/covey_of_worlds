@@ -31,7 +31,7 @@ pub struct Neighbour {
 }
 
 impl Neighbour {
-    fn new(value: &ldtk::NeighbourLevel) -> Result<Self, NeighbourError> {
+    pub(crate) fn new(value: &ldtk::NeighbourLevel) -> Result<Self, NeighbourError> {
         Ok(Self {
             level_iid: value.level_iid.clone(),
             dir: match value.dir.as_str() {

@@ -56,7 +56,6 @@ pub struct LayerAsset {
     #[reflect(ignore)]
     pub(crate) _project: Handle<ProjectAsset>,
     pub(crate) entity_handles: Vec<(String, String, Handle<EntityAsset>)>,
-    pub(crate) entities_to_load: EntitiesToLoad,
 }
 
 impl LayerAsset {
@@ -91,13 +90,6 @@ impl LayerAsset {
     //         // entity_assets_by_iid,
     //     })
     // }
-}
-#[derive(Default, Debug, Reflect)]
-pub enum EntitiesToLoad {
-    None,
-    ByIid(Vec<String>),
-    #[default]
-    All,
 }
 
 impl LdtkAsset for LayerAsset {}
