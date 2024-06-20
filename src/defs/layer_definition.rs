@@ -1,15 +1,13 @@
 use bevy::prelude::*;
 use thiserror::Error;
 
-use crate::{
-    assets::layer::{LayerType, LayerTypeError},
-    ldtk,
-};
-
-use super::{
-    int_grid_value::{IntGridValue, IntGridValueFromError},
-    int_grid_value_group::{IntGridValueGroup, IntGridValueGroupFromError},
-};
+use crate::assets::layer::LayerType;
+use crate::assets::layer::LayerTypeError;
+use crate::defs::int_grid_value::IntGridValue;
+use crate::defs::int_grid_value::IntGridValueFromError;
+use crate::defs::int_grid_value_group::IntGridValueGroup;
+use crate::defs::int_grid_value_group::IntGridValueGroupFromError;
+use crate::ldtk;
 
 #[derive(Debug, Reflect)]
 pub struct LayerDefinition {

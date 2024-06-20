@@ -4,12 +4,11 @@ use bevy::prelude::*;
 use crate::assets::level::LevelAsset;
 use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetChildLoader;
 use crate::components::iid::Iid;
 use crate::components::traits::{LdtkComponent, LdtkComponentError};
 use crate::exports::world_layout::WorldLayout;
 use crate::ldtk;
-
-use super::traits::LdtkAssetChildLoader;
 
 #[derive(Asset, Debug, Reflect)]
 pub struct WorldAsset {

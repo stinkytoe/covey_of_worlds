@@ -1,22 +1,19 @@
 use bevy::prelude::*;
 use thiserror::Error;
 
-use crate::{
-    components::{field_instances::FieldInstances, iid::Iid, traits::LdtkComponent},
-    exports::{
-        field_instance::{FieldInstance, FieldInstanceValueParseError},
-        level_background_position::LevelBackgroundPosition,
-        neighbors::{Neighbour, NeighbourError},
-    },
-    ldtk,
-    util::{bevy_color_from_ldtk, ColorParseError},
-};
-
-use super::{
-    layer::LayerAsset,
-    project::ProjectAsset,
-    traits::{LdtkAsset, LdtkAssetChildLoader},
-};
+use crate::assets::layer::LayerAsset;
+use crate::assets::project::ProjectAsset;
+use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetChildLoader;
+use crate::components::iid::Iid;
+use crate::components::traits::LdtkComponent;
+use crate::exports::field_instance::{FieldInstance, FieldInstanceValueParseError};
+use crate::exports::level_background_position::LevelBackgroundPosition;
+use crate::exports::neighbors::Neighbour;
+use crate::exports::neighbors::NeighbourError;
+use crate::ldtk;
+use crate::util::bevy_color_from_ldtk;
+use crate::util::ColorParseError;
 
 #[derive(Debug, Error)]
 pub enum LevelAssetError {

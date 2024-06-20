@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-use crate::{components::tileset_rectangle::TilesetRectangle, ldtk};
+use crate::components::tileset_rectangle::TilesetRectangle;
+use crate::ldtk;
 
 #[derive(Debug, Default, Reflect)]
 pub struct EnumValueDefinition {

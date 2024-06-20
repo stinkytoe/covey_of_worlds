@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use thiserror::Error;
 
-use crate::{components::tileset_rectangle::TilesetRectangle, ldtk};
+use crate::components::tileset_rectangle::TilesetRectangle;
+use crate::ldtk;
 
 #[derive(Debug, Error)]
 pub enum FieldInstanceValueParseError {

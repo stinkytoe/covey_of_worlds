@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use std::fmt::Debug;
 use thiserror::Error;
 
-use crate::assets::traits::{LdtkAsset, LdtkAssetLoadEvent};
+use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetLoadEvent;
 
 #[derive(Debug, Error)]
 pub(crate) enum LdtkComponentError {

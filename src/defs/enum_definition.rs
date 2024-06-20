@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 use std::path::PathBuf;
 
+use crate::defs::enum_value_definition::EnumValueDefinition;
 use crate::ldtk;
-
-use super::enum_value_definition::EnumValueDefinition;
 
 #[derive(Debug, Default, Reflect)]
 pub struct EnumDefinition {

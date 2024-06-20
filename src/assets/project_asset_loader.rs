@@ -2,19 +2,18 @@ use bevy::asset::AssetLoader;
 use bevy::asset::AsyncReadExt;
 use bevy::asset::ReadAssetBytesError;
 use bevy::prelude::*;
-use bevy::reflect::List;
 use serde::Deserialize;
 use serde::Serialize;
 use std::path::PathBuf;
 use thiserror::Error;
 
 use crate::assets::level::LevelAsset;
+use crate::assets::level::LevelAssetError;
 use crate::assets::project::ProjectAsset;
 use crate::assets::world::WorldAsset;
 use crate::ldtk;
-use crate::util::{bevy_color_from_ldtk, ColorParseError};
-
-use super::level::LevelAssetError;
+use crate::util::bevy_color_from_ldtk;
+use crate::util::ColorParseError;
 
 #[derive(Component, Debug, Reflect, Serialize, Deserialize)]
 pub struct ProjectSettings {

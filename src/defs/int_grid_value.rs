@@ -3,7 +3,8 @@ use thiserror::Error;
 
 use crate::components::tileset_rectangle::TilesetRectangle;
 use crate::ldtk;
-use crate::util::{bevy_color_from_ldtk, ColorParseError};
+use crate::util::bevy_color_from_ldtk;
+use crate::util::ColorParseError;
 
 #[derive(Clone, Debug, Default, Reflect)]
 pub struct IntGridValue {

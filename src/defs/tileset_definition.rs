@@ -1,10 +1,9 @@
 use bevy::math::I64Vec2;
 use bevy::prelude::*;
 
+use crate::defs::enum_tag_value::EnumTagValue;
+use crate::defs::tile_custom_metadata::TileCustomMetadata;
 use crate::ldtk;
-
-use super::enum_tag_value::EnumTagValue;
-use super::tile_custom_metadata::TileCustomMetadata;
 
 #[derive(Debug, Default, Reflect)]
 pub struct TilesetDefinition {

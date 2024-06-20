@@ -1,9 +1,10 @@
 use bevy::{math::I64Vec2, prelude::*};
 use thiserror::Error;
 
+use crate::assets::entity::EntityAsset;
+use crate::assets::project::ProjectAsset;
+use crate::assets::traits::LdtkAsset;
 use crate::components::tiles::Tiles;
-
-use super::{entity::EntityAsset, project::ProjectAsset, traits::LdtkAsset};
 
 #[derive(Debug, Error)]
 pub enum LayerTypeError {

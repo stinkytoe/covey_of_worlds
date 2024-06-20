@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use thiserror::Error;
 
-use crate::{
-    ldtk,
-    util::{bevy_color_from_ldtk, ColorParseError},
-};
+use crate::ldtk;
+use crate::util::bevy_color_from_ldtk;
+use crate::util::ColorParseError;
 
 #[derive(Debug, Default, Reflect)]
 pub struct IntGridValueGroup {

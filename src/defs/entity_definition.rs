@@ -3,13 +3,12 @@ use bevy::sprite::Anchor;
 use thiserror::Error;
 
 use crate::components::tileset_rectangle::TilesetRectangle;
+use crate::defs::tile_render_mode::TileRenderMode;
 use crate::ldtk;
 use crate::util::bevy_anchor_from_ldtk;
 use crate::util::bevy_color_from_ldtk;
 use crate::util::AnchorIntoError;
 use crate::util::ColorParseError;
-
-use super::tile_render_mode::TileRenderMode;
 
 #[derive(Debug, Reflect)]
 pub struct EntityDefinition {
