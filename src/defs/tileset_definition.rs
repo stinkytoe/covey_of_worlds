@@ -22,7 +22,7 @@ pub struct TilesetDefinition {
 }
 
 impl TilesetDefinition {
-    fn new(value: &ldtk::TilesetDefinition) -> Self {
+    pub(crate) fn new(value: &ldtk::TilesetDefinition) -> Self {
         Self {
             grid_size: (value.c_wid, value.c_hei).into(),
             custom_data: value

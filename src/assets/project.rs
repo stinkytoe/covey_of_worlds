@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 
 use crate::assets::traits::LdtkAsset;
 use crate::assets::traits::LdtkAssetChildLoader;
@@ -6,6 +7,10 @@ use crate::assets::world::WorldAsset;
 use crate::components::iid::Iid;
 use crate::components::traits::LdtkComponent;
 use crate::components::traits::LdtkComponentError;
+use crate::defs::entity_definition::EntityDefinition;
+use crate::defs::enum_definition::EnumDefinition;
+use crate::defs::layer_definition::LayerDefinition;
+use crate::defs::tileset_definition::TilesetDefinition;
 
 #[derive(Asset, Debug, Reflect)]
 pub struct ProjectAsset {
@@ -15,8 +20,12 @@ pub struct ProjectAsset {
     pub json_version: String,
     #[reflect(ignore)]
     pub(crate) self_handle: Handle<ProjectAsset>,
+    pub(crate) layer_defs: HashMap<i64, LayerDefinition>,
+    pub(crate) entity_defs: HashMap<i64, EntityDefinition>,
+    pub(crate) tileset_defs: HashMap<i64, TilesetDefinition>,
+    pub(crate) enum_defs: HashMap<i64, EnumDefinition>,
+    #[reflect(ignore)]
     pub(crate) world_handles: Vec<Handle<WorldAsset>>,
-    // pub(crate) worlds_to_load: WorldsToLoad,
 }
 
 impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {

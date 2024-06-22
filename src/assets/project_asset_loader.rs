@@ -12,12 +12,18 @@ use thiserror::Error;
 use crate::assets::entity::EntityAsset;
 use crate::assets::entity::EntityAssetError;
 use crate::assets::layer::LayerAsset;
+use crate::assets::layer::LayerAssetError;
 use crate::assets::layer::LayerType;
-use crate::assets::layer::LayerTypeError;
 use crate::assets::level::LevelAsset;
 use crate::assets::level::LevelAssetError;
 use crate::assets::project::ProjectAsset;
 use crate::assets::world::WorldAsset;
+use crate::defs::entity_definition::EntityDefinition;
+use crate::defs::entity_definition::EntityDefinitionFromError;
+use crate::defs::enum_definition::EnumDefinition;
+use crate::defs::layer_definition::LayerDefinition;
+use crate::defs::layer_definition::LayerDefinitionFromError;
+use crate::defs::tileset_definition::TilesetDefinition;
 use crate::exports::tile_instance::TileInstance;
 use crate::ldtk;
 use crate::util::bevy_color_from_ldtk;
@@ -50,11 +56,15 @@ pub(crate) enum ProjectAssetLoaderError {
     #[error(transparent)]
     LevelAssetError(#[from] LevelAssetError),
     #[error(transparent)]
-    LayerTypeError(#[from] LayerTypeError),
+    LayerTypeError(#[from] LayerAssetError),
     #[error(transparent)]
     EntityAssetError(#[from] EntityAssetError),
     #[error(transparent)]
     ReadAssetBytesError(#[from] ReadAssetBytesError),
+    #[error(transparent)]
+    LayerDefinitionFromError(#[from] LayerDefinitionFromError),
+    #[error(transparent)]
+    EntityDefinitionFromError(#[from] EntityDefinitionFromError),
     #[error("Could not get project directory? {0}")]
     BadProjectDirectory(PathBuf),
     #[error("externalRelPath is None when external_levels is true?")]
@@ -235,12 +245,50 @@ impl AssetLoader for ProjectAssetLoader {
                 })
                 .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
+            let layer_defs = value
+                .defs
+                .layers
+                .iter()
+                .map(|layer_def| -> Result<_, LayerDefinitionFromError> {
+                    Ok((layer_def.uid, LayerDefinition::new(layer_def)?))
+                })
+                .collect::<Result<_, _>>()?;
+
+            let entity_defs = value
+                .defs
+                .entities
+                .iter()
+                .map(|entity_def| -> Result<_, EntityDefinitionFromError> {
+                    Ok((entity_def.uid, EntityDefinition::new(entity_def)?))
+                })
+                .collect::<Result<_, _>>()?;
+
+            let tileset_defs = value
+                .defs
+                .tilesets
+                .iter()
+                .map(TilesetDefinition::new)
+                .map(|tileset_def| (tileset_def.uid, tileset_def))
+                .collect();
+
+            let enum_defs = value
+                .defs
+                .enums
+                .iter()
+                .map(EnumDefinition::new)
+                .map(|enum_def| (enum_def.uid, enum_def))
+                .collect();
+
             Ok(ProjectAsset {
                 bg_color: bevy_color_from_ldtk(&value.bg_color)?,
                 external_levels: value.external_levels,
                 iid: value.iid,
                 json_version: value.json_version.clone(),
                 self_handle,
+                layer_defs,
+                entity_defs,
+                tileset_defs,
+                enum_defs,
                 world_handles,
             })
         })

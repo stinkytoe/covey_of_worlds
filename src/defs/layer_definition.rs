@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use thiserror::Error;
 
+use crate::assets::layer::LayerAssetError;
 use crate::assets::layer::LayerType;
-use crate::assets::layer::LayerTypeError;
 use crate::defs::int_grid_value::IntGridValue;
 use crate::defs::int_grid_value::IntGridValueFromError;
 use crate::defs::int_grid_value_group::IntGridValueGroup;
@@ -30,7 +30,7 @@ pub struct LayerDefinition {
 #[derive(Debug, Error)]
 pub enum LayerDefinitionFromError {
     #[error(transparent)]
-    LayerTypeError(#[from] LayerTypeError),
+    LayerTypeError(#[from] LayerAssetError),
     #[error(transparent)]
     IntGridValueFromError(#[from] IntGridValueFromError),
     #[error(transparent)]

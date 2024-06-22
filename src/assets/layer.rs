@@ -8,7 +8,7 @@ use crate::exports::tile_instance::TileInstance;
 use crate::ldtk;
 
 #[derive(Debug, Error)]
-pub enum LayerTypeError {
+pub enum LayerAssetError {
     #[error("Unknown LDtk layer type! {0}")]
     UnknownLayerType(String),
 }
@@ -22,13 +22,13 @@ pub enum LayerType {
 }
 
 impl LayerType {
-    pub fn new(ldtk_type: &str) -> Result<LayerType, LayerTypeError> {
+    pub fn new(ldtk_type: &str) -> Result<LayerType, LayerAssetError> {
         Ok(match ldtk_type {
             "IntGrid" => LayerType::IntGrid,
             "Entities" => LayerType::Entities,
             "Tiles" => LayerType::Tiles,
             "AutoLayer" => LayerType::Autolayer,
-            _ => return Err(LayerTypeError::UnknownLayerType(ldtk_type.to_string())),
+            _ => return Err(LayerAssetError::UnknownLayerType(ldtk_type.to_string())),
         })
     }
 }
@@ -69,7 +69,7 @@ impl LayerAsset {
         tiles: Vec<TileInstance>,
         entity_handles: Vec<Handle<EntityAsset>>,
         layer_separation: f32,
-    ) -> Result<Self, LayerTypeError> {
+    ) -> Result<Self, LayerAssetError> {
         Ok(Self {
             grid_size: (value.c_wid, value.c_hei).into(),
             grid_cell_size: value.grid_size,
