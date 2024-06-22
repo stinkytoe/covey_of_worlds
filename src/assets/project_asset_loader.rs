@@ -9,8 +9,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::assets::entity::EntityAsset;
+use crate::assets::entity::EntityAssetError;
 use crate::assets::layer::LayerAsset;
 use crate::assets::layer::LayerType;
+use crate::assets::layer::LayerTypeError;
 use crate::assets::level::LevelAsset;
 use crate::assets::level::LevelAssetError;
 use crate::assets::project::ProjectAsset;
@@ -20,8 +23,6 @@ use crate::ldtk;
 use crate::util::bevy_color_from_ldtk;
 use crate::util::ldtk_path_to_asset_path;
 use crate::util::ColorParseError;
-
-use super::layer::LayerTypeError;
 
 #[derive(Component, Debug, Reflect, Serialize, Deserialize)]
 pub struct ProjectSettings {
@@ -46,36 +47,28 @@ pub(crate) enum ProjectAssetLoaderError {
     SerdeJson(#[from] serde_json::Error),
     #[error(transparent)]
     ColorParseError(#[from] ColorParseError),
-    // #[error(transparent)]
-    // NewWorldAssetError(#[from] NewWorldAssetError),
     #[error(transparent)]
     LevelAssetError(#[from] LevelAssetError),
     #[error(transparent)]
     LayerTypeError(#[from] LayerTypeError),
     #[error(transparent)]
+    EntityAssetError(#[from] EntityAssetError),
+    #[error(transparent)]
     ReadAssetBytesError(#[from] ReadAssetBytesError),
-    // #[error(transparent)]
-    // LayerTypeError(#[from] LayerTypeError),
-    // #[error(transparent)]
-    // NewEntityAssetError(#[from] NewEntityAssetError),
-    // #[error(transparent)]
-    // LayerDefinitionFromError(#[from] LayerDefinitionFromError),
-    // #[error(transparent)]
-    // EntityDefinitionFromError(#[from] EntityDefinitionFromError),
     #[error("Could not get project directory? {0}")]
     BadProjectDirectory(PathBuf),
     #[error("externalRelPath is None when external_levels is true?")]
     ExternalRelPathIsNone,
-    // #[error("tile instances in entity type layer!")]
-    // NonTileLayerWithTiles,
+    #[error("tile instances in entity type layer!")]
+    EntityLayerWithTiles,
     #[error("Value is None in a single world project?")]
     ValueMissingInSingleWorld,
     #[error("Layer Instances is None in a non-external levels project?")]
     LayerInstancesIsNone,
-    // #[error("Int Grid/Auto Layer should only have auto tiles!")]
-    // IntGridWithEntitiesOrGridTiles,
-    // #[error("Tiles Layer should only have grid tiles!")]
-    // TilesWithAutoLayerOrEntities,
+    #[error("Int Grid/Auto Layer should only have auto tiles!")]
+    IntGridWithEntitiesOrGridTiles,
+    #[error("Tiles Layer should only have grid tiles!")]
+    TilesWithAutoLayerOrEntities,
 }
 
 #[derive(Default)]
@@ -169,28 +162,50 @@ impl AssetLoader for ProjectAssetLoader {
                             .iter()
                             .rev()
                             .enumerate()
-                            .map(|(index, value)| {
-                                let layer_type = LayerType::new(&value.layer_instance_type)?;
-                                let tiles = match layer_type {
-                                    LayerType::IntGrid | LayerType::Autolayer => value
-                                        .auto_layer_tiles
-                                        .iter()
-                                        .map(TileInstance::new)
-                                        .collect(),
-                                    LayerType::Tiles => {
-                                        value.grid_tiles.iter().map(TileInstance::new).collect()
-                                    }
-                                    LayerType::Entities => Vec::default(),
-                                };
+                            .map(|(index, ldtk_layer)| {
+                                let layer_type = LayerType::new(&ldtk_layer.layer_instance_type)?;
+                                let (tiles, entity_handles) = match layer_type {
+                                    LayerType::IntGrid | LayerType::Autolayer => {
+                                            if !ldtk_layer.grid_tiles.is_empty() || !ldtk_layer.entity_instances.is_empty()  {
+                                                return Err(ProjectAssetLoaderError::IntGridWithEntitiesOrGridTiles);
+                                            }
 
-                                let entity_handles = Vec::default();
+                                            (ldtk_layer.auto_layer_tiles.iter().map(TileInstance::new).collect(), vec![])
+                                        },
+                                    LayerType::Tiles => {
+                                            if !ldtk_layer.auto_layer_tiles.is_empty()|| !ldtk_layer.entity_instances.is_empty()   {
+                                                return Err(ProjectAssetLoaderError::TilesWithAutoLayerOrEntities);
+                                            }
+
+                                            (ldtk_layer.grid_tiles.iter().map(TileInstance::new).collect(), vec![])
+                                        },
+
+                                    LayerType::Entities => {
+                                            if !ldtk_layer.auto_layer_tiles.is_empty() || !ldtk_layer.grid_tiles.is_empty() {
+                                                return Err(ProjectAssetLoaderError::EntityLayerWithTiles)
+                                            }
+
+                                            let entity_assets = ldtk_layer.entity_instances
+                                                .iter()
+                                                .map(|ldtk_entity| {
+                                                    let label = format!("{}/{}/{}/{}", ldtk_world.identifier, ldtk_level.identifier, ldtk_layer.identifier, ldtk_entity.identifier);
+                                                    let asset = EntityAsset::new(ldtk_entity, self_handle.clone())?;
+                                                    Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                                                })
+                                                .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
+
+                                            (vec![], entity_assets)
+                                        },
+                                };
 
                                 let label = format!(
                                     "{}/{}/{}",
-                                    ldtk_world.identifier, ldtk_level.identifier, value.identifier
+                                    ldtk_world.identifier,
+                                    ldtk_level.identifier,
+                                    ldtk_layer.identifier
                                 );
                                 let asset = LayerAsset::new(
-                                    value,
+                                    ldtk_layer,
                                     self_handle.clone(),
                                     index,
                                     layer_type,
