@@ -37,9 +37,9 @@ pub struct LevelAsset {
     pub size: Vec2,
     // (worldX, worldY, and worldDepth)
     // In Bevy coordinate system, not necessarily the same as Bevy transform!
-    pub world_location: Vec3,
+    pub location: Vec3,
     #[reflect(ignore)]
-    pub(crate) project: Handle<ProjectAsset>,
+    pub(crate) _project: Handle<ProjectAsset>,
     pub(crate) layer_handles: Vec<Handle<LayerAsset>>,
 }
 
@@ -52,31 +52,28 @@ impl LevelAsset {
     ) -> Result<Self, LevelAssetError> {
         Ok(Self {
             bg_color: bevy_color_from_ldtk(&value.bg_color)?,
-            bg_pos: value
-                .bg_pos
-                .as_ref()
-                .map(|bg_pos| LevelBackgroundPosition::new(bg_pos)),
+            bg_pos: value.bg_pos.as_ref().map(LevelBackgroundPosition::new),
             neighbours: value
                 .neighbours
                 .iter()
-                .map(|neighbour| Neighbour::new(neighbour))
+                .map(Neighbour::new)
                 .collect::<Result<_, _>>()?,
             bg_rel_path: value.bg_rel_path.clone(),
             field_instances: value
                 .field_instances
                 .iter()
-                .map(|field_instance| FieldInstance::new(field_instance))
+                .map(FieldInstance::new)
                 .collect::<Result<_, _>>()?,
             identifier: value.identifier.clone(),
             iid: value.iid.clone(),
             size: (value.px_wid as f32, value.px_hei as f32).into(),
-            world_location: (
+            location: (
                 value.world_x as f32,
                 -value.world_y as f32,
                 (value.world_depth as f32) * level_separation,
             )
                 .into(),
-            project,
+            _project: project,
             layer_handles,
         })
     }
@@ -126,12 +123,12 @@ impl LdtkComponent<LevelAsset> for Transform {
         asset: &LevelAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         if let Ok(mut transform) = query.get_mut(entity) {
-            transform.translation = asset.world_location;
+            transform.translation = asset.location;
         } else {
             commands
                 .entity(entity)
                 .insert(SpatialBundle::from_transform(Transform::from_translation(
-                    asset.world_location,
+                    asset.location,
                 )));
         }
         Ok(())

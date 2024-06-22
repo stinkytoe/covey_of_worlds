@@ -2,18 +2,26 @@ use bevy::asset::AssetLoader;
 use bevy::asset::AsyncReadExt;
 use bevy::asset::ReadAssetBytesError;
 use bevy::prelude::*;
+use futures_lite::future;
 use serde::Deserialize;
 use serde::Serialize;
+use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::assets::layer::LayerAsset;
+use crate::assets::layer::LayerType;
 use crate::assets::level::LevelAsset;
 use crate::assets::level::LevelAssetError;
 use crate::assets::project::ProjectAsset;
 use crate::assets::world::WorldAsset;
+use crate::exports::tile_instance::TileInstance;
 use crate::ldtk;
 use crate::util::bevy_color_from_ldtk;
+use crate::util::ldtk_path_to_asset_path;
 use crate::util::ColorParseError;
+
+use super::layer::LayerTypeError;
 
 #[derive(Component, Debug, Reflect, Serialize, Deserialize)]
 pub struct ProjectSettings {
@@ -42,6 +50,8 @@ pub(crate) enum ProjectAssetLoaderError {
     // NewWorldAssetError(#[from] NewWorldAssetError),
     #[error(transparent)]
     LevelAssetError(#[from] LevelAssetError),
+    #[error(transparent)]
+    LayerTypeError(#[from] LayerTypeError),
     #[error(transparent)]
     ReadAssetBytesError(#[from] ReadAssetBytesError),
     // #[error(transparent)]
@@ -125,45 +135,90 @@ impl AssetLoader for ProjectAssetLoader {
                 value.worlds
             };
 
-            let mut world_handles = Vec::new();
-            for ldtk_world in ldtk_worlds.iter() {
-                let mut level_handles = Vec::new();
-                for ldtk_level in ldtk_world.levels.iter() {
-                    // let layers = if value.external_levels {
-                    //     let level_path = ldtk_level
-                    //         .external_rel_path
-                    //         .as_ref()
-                    //         .ok_or(ProjectAssetLoaderError::ExternalRelPathIsNone)?;
-                    //     let level_path = Path::new(&level_path);
-                    //     let level_path = _ldtk_path_to_asset_path(&base_directory, level_path);
-                    //     let bytes = load_context.read_asset_bytes(level_path).await?;
-                    //     let level_json: ldtk::Level = serde_json::from_slice(&bytes)?;
-                    //     level_json.layer_instances.unwrap()
-                    // } else {
-                    //     ldtk_level
-                    //         .layer_instances
-                    //         .as_ref()
-                    //         .ok_or(ProjectAssetLoaderError::LayerInstancesIsNone)?
-                    //         .to_vec()
-                    // };
-                    let label = format!("{}/{}", ldtk_world.identifier, ldtk_level.identifier);
-                    let level_asset = LevelAsset::new(
-                        ldtk_level,
-                        self_handle.clone(),
-                        settings.level_separation,
-                        Vec::default(),
-                    )?;
+            let world_handles = ldtk_worlds
+                .iter()
+                .map(|ldtk_world| {
+                    let level_handles = ldtk_world
+                        .levels
+                        .iter()
+                        .map(|ldtk_level| {
+                            let layer_handles = if value.external_levels {
+                                let level_path = ldtk_level
+                                    .external_rel_path
+                                    .as_ref()
+                                    .ok_or(ProjectAssetLoaderError::ExternalRelPathIsNone)?;
+                                let level_path = Path::new(&level_path);
+                                let level_path =
+                                    ldtk_path_to_asset_path(&base_directory, level_path);
+                                let bytes_result: Result<Vec<u8>, ProjectAssetLoaderError> =
+                                    future::block_on(async {
+                                        Ok(load_context.read_asset_bytes(level_path).await?)
+                                    });
+                                let level_json: ldtk::Level =
+                                    serde_json::from_slice(&bytes_result?)?;
+                                level_json
+                                    .layer_instances
+                                    .ok_or(ProjectAssetLoaderError::LayerInstancesIsNone)?
+                            } else {
+                                ldtk_level
+                                    .layer_instances
+                                    .as_ref()
+                                    .ok_or(ProjectAssetLoaderError::LayerInstancesIsNone)?
+                                    .to_vec()
+                            }
+                            .iter()
+                            .rev()
+                            .enumerate()
+                            .map(|(index, value)| {
+                                let layer_type = LayerType::new(&value.layer_instance_type)?;
+                                let tiles = match layer_type {
+                                    LayerType::IntGrid | LayerType::Autolayer => value
+                                        .auto_layer_tiles
+                                        .iter()
+                                        .map(TileInstance::new)
+                                        .collect(),
+                                    LayerType::Tiles => {
+                                        value.grid_tiles.iter().map(TileInstance::new).collect()
+                                    }
+                                    LayerType::Entities => Vec::default(),
+                                };
 
-                    level_handles
-                        .push(load_context.add_loaded_labeled_asset(label, level_asset.into()));
-                }
+                                let entity_handles = Vec::default();
 
-                let label = ldtk_world.identifier.clone();
-                let world_asset =
-                    WorldAsset::new(ldtk_world, self_handle.clone(), level_handles).into();
+                                let label = format!(
+                                    "{}/{}/{}",
+                                    ldtk_world.identifier, ldtk_level.identifier, value.identifier
+                                );
+                                let asset = LayerAsset::new(
+                                    value,
+                                    self_handle.clone(),
+                                    index,
+                                    layer_type,
+                                    tiles,
+                                    entity_handles,
+                                    settings.layer_separation,
+                                )?;
+                                Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                            })
+                            .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
-                world_handles.push(load_context.add_loaded_labeled_asset(label, world_asset));
-            }
+                            let label =
+                                format!("{}/{}", ldtk_world.identifier, ldtk_level.identifier);
+                            let asset = LevelAsset::new(
+                                ldtk_level,
+                                self_handle.clone(),
+                                settings.level_separation,
+                                layer_handles,
+                            )?;
+                            Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                        })
+                        .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
+
+                    let label = ldtk_world.identifier.clone();
+                    let asset = WorldAsset::new(ldtk_world, self_handle.clone(), level_handles);
+                    Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                })
+                .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
             Ok(ProjectAsset {
                 bg_color: bevy_color_from_ldtk(&value.bg_color)?,

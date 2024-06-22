@@ -13,7 +13,7 @@ pub struct TileInstance {
 }
 
 impl TileInstance {
-    fn new(value: &ldtk::TileInstance) -> Self {
+    pub fn new(value: &ldtk::TileInstance) -> Self {
         Self {
             alpha: value.a as f32,
             flip_h: value.f & 1 == 1,

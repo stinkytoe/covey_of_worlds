@@ -6,7 +6,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-pub(crate) fn _ldtk_path_to_asset_path(base_directory: &Path, ldtk_path: &Path) -> PathBuf {
+pub(crate) fn ldtk_path_to_asset_path(base_directory: &Path, ldtk_path: &Path) -> PathBuf {
     base_directory.join(ldtk_path).clean()
 }
 
