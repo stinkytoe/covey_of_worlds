@@ -11,7 +11,7 @@ fn main() {
             DefaultPlugins
                 .set(LogPlugin {
                     level: Level::WARN,
-                    filter: "flock_of_tiles=trace,example=trace".into(),
+                    filter: "covey_of_worlds=trace,example=trace".into(),
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
@@ -24,7 +24,14 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle {
+        transform: Transform {
+            scale: Vec3::splat(0.3),
+            ..default()
+        },
+        ..default()
+    });
+
     commands.spawn(asset_server.load::<ProjectAsset>("ldtk/top_down.ldtk"));
 }
 

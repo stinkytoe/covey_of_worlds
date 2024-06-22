@@ -11,7 +11,7 @@ pub struct ReferenceToAnEntityInstance {
 }
 
 impl ReferenceToAnEntityInstance {
-    pub(crate) fn new(value: &ldtk::ReferenceToAnEntityInstance) -> Self {
+    pub(crate) fn _new(value: &ldtk::ReferenceToAnEntityInstance) -> Self {
         Self {
             entity_iid: value.entity_iid.clone(),
             layer_iid: value.layer_iid.clone(),

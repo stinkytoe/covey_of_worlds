@@ -1,4 +1,9 @@
 use bevy::prelude::*;
+use bevy::render::render_asset::RenderAssetUsages;
+use bevy::render::render_resource::Extent3d;
+use bevy::render::render_resource::TextureDimension;
+use bevy::render::render_resource::TextureFormat;
+use bevy::sprite::Anchor;
 use thiserror::Error;
 
 use crate::assets::layer::LayerAsset;
@@ -15,6 +20,8 @@ use crate::ldtk;
 use crate::util::bevy_color_from_ldtk;
 use crate::util::ColorParseError;
 
+use super::traits::LdtkAssetLoadEvent;
+
 #[derive(Debug, Error)]
 pub enum LevelAssetError {
     #[error(transparent)]
@@ -23,6 +30,8 @@ pub enum LevelAssetError {
     FieldInstanceValueParseErrpr(#[from] FieldInstanceValueParseError),
     #[error(transparent)]
     NeighbourError(#[from] NeighbourError),
+    #[error("Bad handle?")]
+    BadHandle,
 }
 
 #[derive(Asset, Debug, Reflect)]
@@ -40,6 +49,7 @@ pub struct LevelAsset {
     pub location: Vec3,
     #[reflect(ignore)]
     pub(crate) _project: Handle<ProjectAsset>,
+    #[reflect(ignore)]
     pub(crate) layer_handles: Vec<Handle<LayerAsset>>,
 }
 
@@ -76,6 +86,46 @@ impl LevelAsset {
             _project: project,
             layer_handles,
         })
+    }
+
+    pub(crate) fn level_bg_system(
+        mut commands: Commands,
+        mut events: EventReader<LdtkAssetLoadEvent<LevelAsset>>,
+        layer_assets: Res<Assets<LevelAsset>>,
+        mut image_assets: ResMut<Assets<Image>>,
+    ) -> Result<(), LevelAssetError> {
+        for LdtkAssetLoadEvent { entity, handle } in events.read() {
+            let asset = layer_assets.get(handle).ok_or(LevelAssetError::BadHandle)?;
+            let color = asset.bg_color.as_rgba_u8();
+
+            let bg_image = Image::new_fill(
+                Extent3d {
+                    width: asset.size.x as u32,
+                    height: asset.size.y as u32,
+                    depth_or_array_layers: 1,
+                },
+                TextureDimension::D2,
+                &color,
+                TextureFormat::Rgba8UnormSrgb,
+                RenderAssetUsages::default(),
+            );
+
+            let image_handle = image_assets.add(bg_image);
+
+            commands.entity(*entity).insert((
+                image_handle,
+                Sprite {
+                    // color: todo!(),
+                    // flip_x: todo!(),
+                    // flip_y: todo!(),
+                    // custom_size: todo!(),
+                    // rect: todo!(),
+                    anchor: Anchor::TopLeft,
+                    ..default()
+                },
+            ));
+        }
+        Ok(())
     }
 }
 
@@ -122,6 +172,7 @@ impl LdtkComponent<LevelAsset> for Transform {
         query: &mut Query<&mut Self>,
         asset: &LevelAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        info!("assigning {}", asset.location);
         if let Ok(mut transform) = query.get_mut(entity) {
             transform.translation = asset.location;
         } else {

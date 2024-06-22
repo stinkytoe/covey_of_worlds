@@ -4,6 +4,10 @@ use thiserror::Error;
 use crate::assets::entity::EntityAsset;
 use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
+use crate::assets::traits::LdtkAssetChildLoader;
+use crate::components::iid::Iid;
+use crate::components::tiles::Tiles;
+use crate::components::traits::LdtkComponent;
 use crate::exports::tile_instance::TileInstance;
 use crate::ldtk;
 
@@ -103,3 +107,73 @@ impl LayerAsset {
 }
 
 impl LdtkAsset for LayerAsset {}
+
+impl LdtkAssetChildLoader<EntityAsset> for LayerAsset {
+    fn children(&self) -> Vec<Handle<EntityAsset>> {
+        self.entity_handles.clone()
+    }
+}
+
+impl LdtkComponent<LayerAsset> for Name {
+    fn do_assign(
+        commands: &mut Commands,
+        entity: Entity,
+        _: &mut Query<&mut Self>,
+        asset: &LayerAsset,
+    ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        commands
+            .entity(entity)
+            .insert(Name::new(asset.identifier.clone()));
+        Ok(())
+    }
+}
+
+impl LdtkComponent<LayerAsset> for Iid {
+    fn do_assign(
+        commands: &mut Commands,
+        entity: Entity,
+        _: &mut Query<&mut Self>,
+        asset: &LayerAsset,
+    ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        commands.entity(entity).insert(Iid(asset.iid.clone()));
+        Ok(())
+    }
+}
+
+impl LdtkComponent<LayerAsset> for Transform {
+    fn do_assign(
+        commands: &mut Commands,
+        entity: Entity,
+        query: &mut Query<&mut Self>,
+        asset: &LayerAsset,
+    ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        if let Ok(mut transform) = query.get_mut(entity) {
+            transform.translation = asset.location;
+        } else {
+            commands
+                .entity(entity)
+                .insert(SpatialBundle::from_transform(Transform::from_translation(
+                    asset.location,
+                )));
+        }
+        Ok(())
+    }
+}
+
+impl LdtkComponent<LayerAsset> for Tiles {
+    fn do_assign(
+        commands: &mut Commands,
+        entity: Entity,
+        _: &mut Query<&mut Self>,
+        asset: &LayerAsset,
+    ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        if asset.tiles.is_empty() {
+            commands.entity(entity).remove::<Tiles>();
+        } else {
+            commands.entity(entity).insert(Tiles {
+                tiles: asset.tiles.clone(),
+            });
+        }
+        Ok(())
+    }
+}
