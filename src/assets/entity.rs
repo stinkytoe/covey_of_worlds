@@ -89,7 +89,7 @@ impl LdtkComponent<EntityAsset> for Iid {
         asset: &EntityAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         let component = Iid(asset.iid.clone());
-        commands.entity(entity).insert(component);
+        commands.entity(entity).try_insert(component);
         Ok(())
     }
 }
@@ -103,7 +103,7 @@ impl LdtkComponent<EntityAsset> for TilesetRectangle {
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         match asset.tile.as_ref() {
             Some(tile) => {
-                commands.entity(entity).insert(tile.clone());
+                commands.entity(entity).try_insert(tile.clone());
             }
             None => {
                 commands.entity(entity).remove::<TilesetRectangle>();

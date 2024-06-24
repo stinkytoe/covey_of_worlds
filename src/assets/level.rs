@@ -4,6 +4,15 @@ use bevy::render::render_resource::Extent3d;
 use bevy::render::render_resource::TextureDimension;
 use bevy::render::render_resource::TextureFormat;
 use bevy::sprite::Anchor;
+use image::imageops;
+use image::imageops::crop_imm;
+use image::imageops::overlay;
+use image::imageops::resize;
+use image::imageops::FilterType;
+use image::ColorType;
+use image::DynamicImage;
+use image::Pixel;
+use image::RgbaImage;
 use thiserror::Error;
 
 use crate::assets::layer::LayerAsset;
@@ -32,6 +41,12 @@ pub enum LevelAssetError {
     NeighbourError(#[from] NeighbourError),
     #[error("Bad handle?")]
     BadHandle,
+    #[error("bg_pos is Some but bg_rel_path is none?")]
+    BgPosWithBgRelPathNone,
+    #[error("bg_pos is none but bg_rel_path Some?")]
+    BgPosNoneWithBgRelPath,
+    #[error("bg_rel_path not found!")]
+    BgRelPathNotFound,
 }
 
 #[derive(Asset, Debug, Reflect)]
@@ -48,7 +63,7 @@ pub struct LevelAsset {
     // In Bevy coordinate system, not necessarily the same as Bevy transform!
     pub location: Vec3,
     #[reflect(ignore)]
-    pub(crate) _project: Handle<ProjectAsset>,
+    pub(crate) project: Handle<ProjectAsset>,
     #[reflect(ignore)]
     pub(crate) layer_handles: Vec<Handle<LayerAsset>>,
 }
@@ -83,7 +98,7 @@ impl LevelAsset {
                 (value.world_depth as f32) * level_separation,
             )
                 .into(),
-            _project: project,
+            project,
             layer_handles,
         })
     }
@@ -91,39 +106,147 @@ impl LevelAsset {
     pub(crate) fn level_bg_system(
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<LevelAsset>>,
-        layer_assets: Res<Assets<LevelAsset>>,
+        project_assets: Res<Assets<ProjectAsset>>,
+        level_assets: Res<Assets<LevelAsset>>,
         mut image_assets: ResMut<Assets<Image>>,
     ) -> Result<(), LevelAssetError> {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
-            let asset = layer_assets.get(handle).ok_or(LevelAssetError::BadHandle)?;
-            let color = asset.bg_color.as_rgba_u8();
+            let level_asset = level_assets.get(handle).ok_or(LevelAssetError::BadHandle)?;
 
-            let bg_image = Image::new_fill(
-                Extent3d {
-                    width: asset.size.x as u32,
-                    height: asset.size.y as u32,
-                    depth_or_array_layers: 1,
-                },
-                TextureDimension::D2,
-                &color,
-                TextureFormat::Rgba8UnormSrgb,
-                RenderAssetUsages::default(),
-            );
+            let project_asset = project_assets
+                .get(&level_asset.project)
+                .ok_or(LevelAssetError::BadHandle)?;
 
-            let image_handle = image_assets.add(bg_image);
+            match (
+                level_asset.bg_pos.as_ref(),
+                level_asset.bg_rel_path.as_ref(),
+            ) {
+                (None, Some(_)) => return Err(LevelAssetError::BgPosNoneWithBgRelPath),
+                (Some(_), None) => return Err(LevelAssetError::BgPosWithBgRelPathNone),
+                (None, None) => {
+                    let color = level_asset.bg_color.as_rgba_u8();
 
-            commands.entity(*entity).insert((
-                image_handle,
-                Sprite {
-                    // color: todo!(),
-                    // flip_x: todo!(),
-                    // flip_y: todo!(),
-                    // custom_size: todo!(),
-                    // rect: todo!(),
-                    anchor: Anchor::TopLeft,
-                    ..default()
-                },
-            ));
+                    let background_image = Image::new_fill(
+                        Extent3d {
+                            width: level_asset.size.x as u32,
+                            height: level_asset.size.y as u32,
+                            depth_or_array_layers: 1,
+                        },
+                        TextureDimension::D2,
+                        &color,
+                        TextureFormat::Rgba8UnormSrgb,
+                        RenderAssetUsages::default(),
+                    );
+
+                    let image_handle = image_assets.add(background_image);
+
+                    commands.entity(*entity).try_insert((
+                        image_handle,
+                        Sprite {
+                            anchor: Anchor::TopLeft,
+                            ..default()
+                        },
+                    ));
+                }
+                (Some(bg_pos), Some(bg_rel_path)) => {
+                    let background_handle = project_asset
+                        .background_assets
+                        .get(bg_rel_path)
+                        .ok_or(LevelAssetError::BgRelPathNotFound)?;
+
+                    // FIXME: remove this expect and return a proper Err(..) value
+                    // once bevy 0.14 drops
+                    let background_image = image_assets
+                        .get(background_handle)
+                        .ok_or(LevelAssetError::BadHandle)?
+                        .clone()
+                        .try_into_dynamic()
+                        .expect("a dynamic image");
+
+                    let cropped = crop_imm(
+                        &background_image,
+                        bg_pos.crop_top_left.x as u32,
+                        bg_pos.crop_top_left.y as u32,
+                        (bg_pos.crop_top_left.x + bg_pos.crop_bottom_right.x) as u32,
+                        (bg_pos.crop_top_left.y + bg_pos.crop_bottom_right.y) as u32,
+                    );
+
+                    let new_size = ((bg_pos.crop_bottom_right - bg_pos.crop_top_left)
+                        * bg_pos.scale)
+                        .as_uvec2();
+
+                    let scaled = resize(
+                        &cropped.to_image(),
+                        new_size.x,
+                        new_size.y,
+                        FilterType::Gaussian,
+                    );
+
+                    // let background_color = DynamicImage::new(
+                    //     layer_asset.size.x as u32,
+                    //     layer_asset.size.y as u32,
+                    //     ColorType::Rgba8,
+                    // );
+                    let color = level_asset.bg_color.as_rgba_u8();
+
+                    // let mut background_color = Image::new_fill(
+                    //     Extent3d {
+                    //         width: layer_asset.size.x as u32,
+                    //         height: layer_asset.size.y as u32,
+                    //         depth_or_array_layers: 1,
+                    //     },
+                    //     TextureDimension::D2,
+                    //     &color,
+                    //     TextureFormat::Rgba8UnormSrgb,
+                    //     RenderAssetUsages::default(),
+                    // );
+
+                    // overlay(
+                    //     &mut background_color.into(),
+                    //     &background_image,
+                    //     bg_pos.top_left.x as i64,
+                    //     bg_pos.top_left.y as i64,
+                    // );
+
+                    let mut background_color =
+                        RgbaImage::new(level_asset.size.x as u32, level_asset.size.y as u32);
+
+                    for (_, _, p) in background_color.enumerate_pixels_mut() {
+                        *p = image::Rgba(color);
+                    }
+
+                    let dynamic_image = image::DynamicImage::from(scaled);
+
+                    overlay(
+                        &mut background_color,
+                        &dynamic_image,
+                        bg_pos.top_left.x as i64,
+                        bg_pos.top_left.y as i64,
+                    );
+
+                    let background_image = Image::from_dynamic(
+                        background_color.into(),
+                        // dynamic_image,
+                        true,
+                        RenderAssetUsages::default(),
+                    );
+
+                    let background_handle = image_assets.add(background_image);
+
+                    commands.entity(*entity).try_insert((
+                        background_handle,
+                        Sprite {
+                            anchor: Anchor::TopLeft,
+                            // color: todo!(),
+                            // flip_x: todo!(),
+                            // flip_y: todo!(),
+                            // custom_size: todo!(),
+                            // rect: todo!(),
+                            ..default()
+                        },
+                    ));
+                }
+            };
         }
         Ok(())
     }
@@ -146,7 +269,7 @@ impl LdtkComponent<LevelAsset> for Name {
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         commands
             .entity(entity)
-            .insert(Name::from(asset.identifier.clone()));
+            .try_insert(Name::from(asset.identifier.clone()));
 
         Ok(())
     }
@@ -159,7 +282,7 @@ impl LdtkComponent<LevelAsset> for Iid {
         _: &mut Query<&mut Self>,
         asset: &LevelAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
-        commands.entity(entity).insert(Iid(asset.iid.clone()));
+        commands.entity(entity).try_insert(Iid(asset.iid.clone()));
 
         Ok(())
     }
@@ -172,13 +295,12 @@ impl LdtkComponent<LevelAsset> for Transform {
         query: &mut Query<&mut Self>,
         asset: &LevelAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
-        info!("assigning {}", asset.location);
         if let Ok(mut transform) = query.get_mut(entity) {
             transform.translation = asset.location;
         } else {
             commands
                 .entity(entity)
-                .insert(SpatialBundle::from_transform(Transform::from_translation(
+                .try_insert(SpatialBundle::from_transform(Transform::from_translation(
                     asset.location,
                 )));
         }

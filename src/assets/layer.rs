@@ -123,7 +123,7 @@ impl LdtkComponent<LayerAsset> for Name {
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         commands
             .entity(entity)
-            .insert(Name::new(asset.identifier.clone()));
+            .try_insert(Name::new(asset.identifier.clone()));
         Ok(())
     }
 }
@@ -135,7 +135,7 @@ impl LdtkComponent<LayerAsset> for Iid {
         _: &mut Query<&mut Self>,
         asset: &LayerAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
-        commands.entity(entity).insert(Iid(asset.iid.clone()));
+        commands.entity(entity).try_insert(Iid(asset.iid.clone()));
         Ok(())
     }
 }
@@ -152,7 +152,7 @@ impl LdtkComponent<LayerAsset> for Transform {
         } else {
             commands
                 .entity(entity)
-                .insert(SpatialBundle::from_transform(Transform::from_translation(
+                .try_insert(SpatialBundle::from_transform(Transform::from_translation(
                     asset.location,
                 )));
         }
@@ -170,7 +170,7 @@ impl LdtkComponent<LayerAsset> for Tiles {
         if asset.tiles.is_empty() {
             commands.entity(entity).remove::<Tiles>();
         } else {
-            commands.entity(entity).insert(Tiles {
+            commands.entity(entity).try_insert(Tiles {
                 tiles: asset.tiles.clone(),
             });
         }

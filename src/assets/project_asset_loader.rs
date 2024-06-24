@@ -245,6 +245,30 @@ impl AssetLoader for ProjectAssetLoader {
                 })
                 .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
+            let background_assets = ldtk_worlds
+                .iter()
+                .flat_map(|world| world.levels.iter())
+                .filter_map(|level| level.bg_rel_path.as_ref())
+                .map(|ldtk_path| {
+                    let asset_path = Path::new(&ldtk_path);
+                    let asset_path = ldtk_path_to_asset_path(&base_directory, asset_path);
+                    let asset_handle = load_context.load(asset_path);
+                    (ldtk_path.clone(), asset_handle)
+                })
+                .collect();
+
+            let tileset_assets = value
+                .defs
+                .tilesets
+                .iter()
+                .filter_map(|tileset_definition| tileset_definition.rel_path.as_ref())
+                .map(|ldtk_path| {
+                    let asset_path = Path::new(&ldtk_path);
+                    let asset_path = ldtk_path_to_asset_path(&base_directory, asset_path);
+                    let asset_handle = load_context.load(asset_path);
+                    (ldtk_path.clone(), asset_handle)
+                })
+                .collect();
             let layer_defs = value
                 .defs
                 .layers
@@ -284,11 +308,13 @@ impl AssetLoader for ProjectAssetLoader {
                 external_levels: value.external_levels,
                 iid: value.iid,
                 json_version: value.json_version.clone(),
-                self_handle,
+                tileset_assets,
+                background_assets,
                 layer_defs,
                 entity_defs,
                 tileset_defs,
                 enum_defs,
+                self_handle,
                 world_handles,
             })
         })

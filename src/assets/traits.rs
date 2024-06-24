@@ -1,5 +1,6 @@
 use bevy::asset::LoadState;
 use bevy::prelude::*;
+use bevy::utils::tracing::field::debug;
 use std::fmt::Debug;
 use thiserror::Error;
 
@@ -22,7 +23,7 @@ where
     ) {
         for (entity, handle) in query.iter() {
             debug!("EntityAsset added! entity: {entity:?}, handle: {handle:?}");
-            commands.entity(entity).insert(LoadStub);
+            commands.entity(entity).try_insert(LoadStub);
         }
     }
 
@@ -32,11 +33,31 @@ where
         query: Query<(Entity, &Handle<Self>)>,
     ) {
         for event in asset_event_reader.read() {
-            if let AssetEvent::Modified { id } = event {
-                for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
-                    commands.entity(entity).insert(LoadStub);
+            match event {
+                AssetEvent::Added { id } => {
+                    debug!("AssetEvent::Added: {:?}", id);
                 }
-            };
+                AssetEvent::Modified { id } => {
+                    debug!("AssetEvent::Modified: {id:?}");
+                    for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
+                        commands.entity(entity).try_insert(LoadStub);
+                    }
+                }
+                AssetEvent::Removed { id } => {
+                    debug!("AssetEvent::Removed: {id:?}");
+                }
+                AssetEvent::Unused { id } => {
+                    debug!("AssetEvent::Unused: {id:?}");
+                }
+                AssetEvent::LoadedWithDependencies { id } => {
+                    debug!("AssetEvent::LoadedWithDependencies: {id:?}");
+                }
+            }
+            // if let AssetEvent::Modified { id } = event {
+            //     for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
+            //         commands.entity(entity).try_insert(LoadStub);
+            //     }
+            // };
         }
     }
 

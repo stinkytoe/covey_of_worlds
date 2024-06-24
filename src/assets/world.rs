@@ -55,7 +55,7 @@ impl LdtkComponent<WorldAsset> for Name {
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         commands
             .entity(entity)
-            .insert(Name::from(asset.identifier.clone()));
+            .try_insert(Name::from(asset.identifier.clone()));
 
         Ok(())
     }
@@ -69,7 +69,7 @@ impl LdtkComponent<WorldAsset> for Iid {
         asset: &WorldAsset,
     ) -> Result<(), crate::components::traits::LdtkComponentError> {
         let component = Iid(asset.iid.clone());
-        commands.entity(entity).insert(component);
+        commands.entity(entity).try_insert(component);
         Ok(())
     }
 }
@@ -84,7 +84,7 @@ impl LdtkComponent<WorldAsset> for Transform {
         if let Ok(mut transform) = query.get_mut(entity) {
             transform.translation = Vec3::ZERO;
         } else {
-            commands.entity(entity).insert(SpatialBundle::default());
+            commands.entity(entity).try_insert(SpatialBundle::default());
         }
         Ok(())
     }

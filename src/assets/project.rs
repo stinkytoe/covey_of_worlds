@@ -18,12 +18,14 @@ pub struct ProjectAsset {
     pub external_levels: bool,
     pub iid: String,
     pub json_version: String,
-    #[reflect(ignore)]
-    pub(crate) self_handle: Handle<ProjectAsset>,
+    pub(crate) tileset_assets: HashMap<String, Handle<Image>>,
+    pub(crate) background_assets: HashMap<String, Handle<Image>>,
     pub(crate) layer_defs: HashMap<i64, LayerDefinition>,
     pub(crate) entity_defs: HashMap<i64, EntityDefinition>,
     pub(crate) tileset_defs: HashMap<i64, TilesetDefinition>,
     pub(crate) enum_defs: HashMap<i64, EnumDefinition>,
+    #[reflect(ignore)]
+    pub(crate) self_handle: Handle<ProjectAsset>,
     #[reflect(ignore)]
     pub(crate) world_handles: Vec<Handle<WorldAsset>>,
 }
@@ -49,7 +51,7 @@ impl LdtkComponent<ProjectAsset> for Name {
             .ok_or(LdtkComponentError::BadPath)?
             .to_string();
         let component = Name::new(name);
-        commands.entity(entity).insert(component);
+        commands.entity(entity).try_insert(component);
         Ok(())
     }
 }
@@ -62,7 +64,7 @@ impl LdtkComponent<ProjectAsset> for Iid {
         asset: &ProjectAsset,
     ) -> Result<(), LdtkComponentError> {
         let component = Iid(asset.iid.clone());
-        commands.entity(entity).insert(component);
+        commands.entity(entity).try_insert(component);
         Ok(())
     }
 }
@@ -77,7 +79,7 @@ impl LdtkComponent<ProjectAsset> for Transform {
         if let Ok(mut transform) = query.get_mut(entity) {
             transform.translation = Vec3::ZERO;
         } else {
-            commands.entity(entity).insert(SpatialBundle::default());
+            commands.entity(entity).try_insert(SpatialBundle::default());
         }
         Ok(())
     }
