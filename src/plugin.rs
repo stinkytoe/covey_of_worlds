@@ -38,7 +38,6 @@ impl Plugin for CoveyOfWorldsPlugin {
                     <Transform as LdtkComponent<ProjectAsset>>::ldtk_asset_event.map(error),
                     ProjectAsset::on_create_system,
                     ProjectAsset::on_modified_system,
-                    // ProjectAsset::with_load_stub_system,
                     ProjectAsset::load_children_system.map(error),
                 ),
             );
@@ -55,7 +54,6 @@ impl Plugin for CoveyOfWorldsPlugin {
                     <Transform as LdtkComponent<WorldAsset>>::ldtk_asset_event.map(error),
                     WorldAsset::on_create_system,
                     WorldAsset::on_modified_system,
-                    // WorldAsset::with_load_stub_system,
                     WorldAsset::load_children_system.map(error),
                 ),
             );
@@ -72,7 +70,6 @@ impl Plugin for CoveyOfWorldsPlugin {
                     <Transform as LdtkComponent<LevelAsset>>::ldtk_asset_event.map(error),
                     LevelAsset::on_create_system,
                     LevelAsset::on_modified_system,
-                    // LevelAsset::with_load_stub_system,
                     LevelAsset::load_children_system.map(error),
                     LevelAsset::level_bg_system.map(error),
                 ),
@@ -91,8 +88,8 @@ impl Plugin for CoveyOfWorldsPlugin {
                     <Tiles as LdtkComponent<LayerAsset>>::ldtk_asset_event.map(error),
                     LayerAsset::on_create_system,
                     LayerAsset::on_modified_system,
-                    // LayerAsset::with_load_stub_system,
                     LayerAsset::load_children_system.map(error),
+                    LayerAsset::layer_tiles_system.map(error),
                 ),
             );
 
@@ -108,7 +105,6 @@ impl Plugin for CoveyOfWorldsPlugin {
                     <TilesetRectangle as LdtkComponent<EntityAsset>>::ldtk_asset_event.map(error),
                     EntityAsset::on_create_system,
                     EntityAsset::on_modified_system,
-                    // EntityAsset::with_load_stub_system,
                 ),
             );
     }

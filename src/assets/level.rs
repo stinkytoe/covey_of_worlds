@@ -112,9 +112,6 @@ impl LevelAsset {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
             let level_asset = level_assets.get(handle).ok_or(LevelAssetError::BadHandle)?;
 
-            // let project_asset = project_assets
-            //     .get(&level_asset.project)
-            //     .ok_or(LevelAssetError::BadHandle)?;
             let project_asset = project_commands
                 .iter()
                 .with_iid(&level_asset.project_iid)

@@ -38,7 +38,7 @@ where
     }
 
     fn on_modified_system(
-        mut commands: Commands,
+        // mut commands: Commands,
         mut asset_event_reader: EventReader<AssetEvent<Self>>,
         mut asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
         query: Query<(Entity, &Handle<Self>)>,
@@ -94,7 +94,7 @@ where
         mut events: EventReader<LdtkAssetLoadEvent<Self>>,
         children_query: Query<(Entity, &Iid), With<Handle<Child>>>,
         entity_children_query: Query<&Children>,
-        entity_parent_query: Query<&Parent>,
+        // entity_parent_query: Query<&Parent>,
         self_assets: Res<Assets<Self>>,
         child_assets: Res<Assets<Child>>,
     ) -> Result<(), LdtkAssetChildLoaderError> {

@@ -1,19 +1,36 @@
-use bevy::{math::I64Vec2, prelude::*};
+use bevy::math::I64Vec2;
+use bevy::prelude::*;
+use bevy::sprite::Mesh2dHandle;
 use thiserror::Error;
 
 use crate::assets::entity::EntityAsset;
 use crate::assets::traits::LdtkAsset;
 use crate::assets::traits::LdtkAssetChildLoader;
+use crate::assets::util::build_image_from_tiles;
+use crate::assets::util::create_tile_layer_mesh;
+use crate::assets::util::BuildImageFromTilesError;
 use crate::components::iid::Iid;
 use crate::components::tiles::Tiles;
 use crate::components::traits::LdtkComponent;
 use crate::exports::tile_instance::TileInstance;
 use crate::ldtk;
+use crate::system_params::project::LdtkProjectCommands;
+use crate::system_params::project::LdtkProjectCommandsEx;
 
 #[derive(Debug, Error)]
 pub enum LayerAssetError {
+    #[error(transparent)]
+    BuildImageFromTilesError(#[from] BuildImageFromTilesError),
     #[error("Unknown LDtk layer type! {0}")]
     UnknownLayerType(String),
+    #[error("Bad Handle?")]
+    BadHandle,
+    #[error("Bad Iid?")]
+    BadIid,
+    #[error("Bad tileset path?")]
+    BadTilesetPath,
+    #[error("Bad tileset handle?")]
+    BadTilesetHandle,
 }
 
 #[derive(Clone, Copy, Debug, Reflect)]
@@ -50,6 +67,8 @@ pub struct LayerAsset {
     pub iid: String,
     #[reflect(ignore)]
     pub int_grid_csv: Vec<i64>,
+    #[reflect(ignore)]
+    pub tiles: Vec<TileInstance>,
     pub layer_def_uid: i64,
     pub level_id: i64,
     pub override_tileset_uid: Option<i64>,
@@ -59,9 +78,8 @@ pub struct LayerAsset {
     // for us!
     pub index: usize,
     #[reflect(ignore)]
-    pub tiles: Vec<TileInstance>,
-    #[reflect(ignore)]
     pub(crate) entity_handles: Vec<Handle<EntityAsset>>,
+    pub(crate) project_iid: String,
 }
 
 impl LayerAsset {
@@ -72,6 +90,7 @@ impl LayerAsset {
         tiles: Vec<TileInstance>,
         entity_handles: Vec<Handle<EntityAsset>>,
         layer_separation: f32,
+        project_iid: String,
     ) -> Result<Self, LayerAssetError> {
         Ok(Self {
             grid_size: (value.c_wid, value.c_hei).into(),
@@ -98,9 +117,85 @@ impl LayerAsset {
             index,
             tiles,
             entity_handles,
+            project_iid,
             // entity_assets_by_identifier,
             // entity_assets_by_iid,
         })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn layer_tiles_system(
+        mut commands: Commands,
+        project_commands: LdtkProjectCommands,
+        query: Query<(Entity, &Handle<LayerAsset>, &Tiles), Changed<Tiles>>,
+        mut removed: RemovedComponents<Tiles>,
+        layer_assets: Res<Assets<LayerAsset>>,
+        mut images: ResMut<Assets<Image>>,
+        mut meshes: ResMut<Assets<Mesh>>,
+        mut materials: ResMut<Assets<ColorMaterial>>,
+    ) -> Result<(), LayerAssetError> {
+        for (entity, handle, tiles) in query.iter() {
+            let layer_asset = layer_assets.get(handle).ok_or(LayerAssetError::BadHandle)?;
+
+            let project_asset = project_commands
+                .iter()
+                .with_iid(&layer_asset.project_iid)
+                .ok_or(LayerAssetError::BadIid)?;
+
+            let mut delete_stub = || {
+                commands.entity(entity).remove::<Mesh2dHandle>();
+                commands.entity(entity).remove::<Handle<ColorMaterial>>();
+            };
+
+            let Some(tileset_rel_path) = layer_asset.tileset_rel_path.as_ref() else {
+                debug!("no tileset_rel_path");
+                delete_stub();
+                return Ok(());
+            };
+
+            debug!("tileset_rel_path: {tileset_rel_path:?}");
+
+            let tileset_handle = project_asset
+                .tileset_assets
+                .get(tileset_rel_path)
+                .ok_or(LayerAssetError::BadTilesetPath)?;
+
+            let tileset = images
+                .get(tileset_handle)
+                .ok_or(LayerAssetError::BadTilesetHandle)?;
+
+            debug!("making a canvas!");
+            let canvas_size = layer_asset.grid_size * layer_asset.grid_cell_size;
+
+            let mesh = create_tile_layer_mesh(canvas_size.as_vec2());
+            let mesh = Mesh2dHandle(meshes.add(mesh));
+
+            let image = build_image_from_tiles(
+                tileset,
+                canvas_size.as_uvec2(),
+                UVec2::splat(layer_asset.grid_cell_size as u32),
+                tiles,
+            )?;
+
+            let color = Color::rgba(01.0, 1.0, 1.0, layer_asset.opacity as f32);
+
+            let texture_handle = images.add(image);
+
+            let texture = Some(texture_handle);
+
+            let material = materials.add(ColorMaterial { color, texture });
+
+            commands.entity(entity).insert((mesh, material));
+        }
+
+        removed.read().for_each(|removed_entity| {
+            commands.entity(removed_entity).remove::<Handle<Image>>();
+            commands
+                .entity(removed_entity)
+                .remove::<Handle<ColorMaterial>>();
+        });
+
+        Ok(())
     }
 }
 

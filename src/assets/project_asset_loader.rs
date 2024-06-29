@@ -226,6 +226,7 @@ impl AssetLoader for ProjectAssetLoader {
                                     tiles,
                                     entity_handles,
                                     settings.layer_separation,
+                                    value.iid.clone(),
                                 )?;
                                 Ok(load_context.add_labeled_asset(label, asset))
                             })
