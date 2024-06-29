@@ -38,7 +38,7 @@ where
     }
 
     fn on_modified_system(
-        // mut commands: Commands,
+        mut commands: Commands,
         mut asset_event_reader: EventReader<AssetEvent<Self>>,
         mut asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
         query: Query<(Entity, &Handle<Self>)>,
@@ -60,6 +60,10 @@ where
                 }
                 AssetEvent::Removed { id } => {
                     debug!("AssetEvent::Removed: {id:?}");
+
+                    // for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
+                    //     commands.entity(entity).despawn();
+                    // }
                 }
                 AssetEvent::Unused { id } => {
                     debug!("AssetEvent::Unused: {id:?}");
@@ -89,6 +93,8 @@ where
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<Self>>,
         children_query: Query<(Entity, &Iid), With<Handle<Child>>>,
+        entity_children_query: Query<&Children>,
+        entity_parent_query: Query<&Parent>,
         self_assets: Res<Assets<Self>>,
         child_assets: Res<Assets<Child>>,
     ) -> Result<(), LdtkAssetChildLoaderError> {
@@ -111,14 +117,20 @@ where
                         .any(|(_, iid)| child_asset.iid() == iid.0)
                 })
                 .for_each(|child| {
+                    debug!("Spawning: {child:?}");
                     commands.entity(*entity).with_children(|parent| {
                         parent.spawn(child.clone());
                     });
                 });
 
             // entity has no child with iid: despawn
-            children_query
+            let Ok(child_entities) = entity_children_query.get(*entity) else {
+                return Ok(());
+            };
+
+            child_entities
                 .iter()
+                .flat_map(|entity| children_query.get(*entity))
                 .filter(|(_, iid)| {
                     !children.iter().any(|child| {
                         let child_asset = child_assets.get(child).expect("bad handle?");
@@ -126,8 +138,9 @@ where
                     })
                 })
                 .for_each(|(entity, _)| {
+                    debug!("Deleting: {entity:?}");
                     let mut ec = commands.entity(entity);
-                    // ec.remove_parent();
+                    ec.remove_parent();
                     ec.despawn();
                 });
         }

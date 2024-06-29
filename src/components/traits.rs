@@ -27,7 +27,7 @@ where
         assets: Res<Assets<A>>,
     ) -> Result<(), LdtkComponentError> {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
-            debug!("LdtkAssetLoadEvent: {entity:?}");
+            trace!("LdtkAssetLoadEvent: {entity:?}");
 
             let asset = assets.get(handle).ok_or(LdtkComponentError::BadHandle)?;
 

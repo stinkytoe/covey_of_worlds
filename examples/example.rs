@@ -11,7 +11,7 @@ fn main() {
             DefaultPlugins
                 .set(LogPlugin {
                     level: Level::WARN,
-                    filter: "covey_of_worlds=trace,example=trace".into(),
+                    filter: "covey_of_worlds=debug,example=trace".into(),
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),

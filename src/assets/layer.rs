@@ -48,6 +48,7 @@ pub struct LayerAsset {
     pub tileset_rel_path: Option<String>,
     pub layer_type: LayerType,
     pub iid: String,
+    #[reflect(ignore)]
     pub int_grid_csv: Vec<i64>,
     pub layer_def_uid: i64,
     pub level_id: i64,
@@ -57,6 +58,7 @@ pub struct LayerAsset {
 
     // for us!
     pub index: usize,
+    #[reflect(ignore)]
     pub tiles: Vec<TileInstance>,
     #[reflect(ignore)]
     pub(crate) entity_handles: Vec<Handle<EntityAsset>>,

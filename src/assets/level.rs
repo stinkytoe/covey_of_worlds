@@ -62,7 +62,7 @@ pub struct LevelAsset {
     // In Bevy coordinate system, not necessarily the same as Bevy transform!
     pub location: Vec3,
     pub project_iid: String,
-    #[reflect(ignore)]
+    // #[reflect(ignore)]
     pub(crate) layer_handles: Vec<Handle<LayerAsset>>,
 }
 
