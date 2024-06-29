@@ -17,14 +17,14 @@ pub struct WorldAsset {
     pub world_grid_size: I64Vec2,
     pub world_layout: WorldLayout,
     #[reflect(ignore)]
-    pub(crate) _project: Handle<ProjectAsset>,
+    // pub(crate) _project: Handle<ProjectAsset>,
     pub(crate) level_handles: Vec<Handle<LevelAsset>>,
 }
 
 impl WorldAsset {
     pub(crate) fn new(
         value: &ldtk::World,
-        project: Handle<ProjectAsset>,
+        // project: Handle<ProjectAsset>,
         level_handles: Vec<Handle<LevelAsset>>,
     ) -> Self {
         Self {
@@ -32,7 +32,6 @@ impl WorldAsset {
             iid: value.iid.clone(),
             world_grid_size: (value.world_grid_width, value.world_grid_height).into(),
             world_layout: value.world_layout.clone().unwrap_or(WorldLayout::Free),
-            _project: project,
             level_handles,
         }
     }
@@ -44,7 +43,11 @@ impl LdtkAssetChildLoader<LevelAsset> for WorldAsset {
     }
 }
 
-impl LdtkAsset for WorldAsset {}
+impl LdtkAsset for WorldAsset {
+    fn iid(&self) -> String {
+        self.iid.clone()
+    }
+}
 
 impl LdtkComponent<WorldAsset> for Name {
     fn do_assign(

@@ -24,8 +24,8 @@ pub struct ProjectAsset {
     pub(crate) entity_defs: HashMap<i64, EntityDefinition>,
     pub(crate) tileset_defs: HashMap<i64, TilesetDefinition>,
     pub(crate) enum_defs: HashMap<i64, EnumDefinition>,
-    #[reflect(ignore)]
-    pub(crate) self_handle: Handle<ProjectAsset>,
+    // #[reflect(ignore)]
+    // pub(crate) self_handle: Handle<ProjectAsset>,
     #[reflect(ignore)]
     pub(crate) world_handles: Vec<Handle<WorldAsset>>,
 }
@@ -36,7 +36,11 @@ impl LdtkAssetChildLoader<WorldAsset> for ProjectAsset {
     }
 }
 
-impl LdtkAsset for ProjectAsset {}
+impl LdtkAsset for ProjectAsset {
+    fn iid(&self) -> String {
+        self.iid.clone()
+    }
+}
 
 impl LdtkComponent<ProjectAsset> for Name {
     fn do_assign(
@@ -45,12 +49,12 @@ impl LdtkComponent<ProjectAsset> for Name {
         _: &mut Query<&mut Self>,
         asset: &ProjectAsset,
     ) -> Result<(), LdtkComponentError> {
-        let name = asset
-            .self_handle
-            .path()
-            .ok_or(LdtkComponentError::BadPath)?
-            .to_string();
-        let component = Name::new(name);
+        // let name = asset
+        //     .self_handle
+        //     .path()
+        //     .ok_or(LdtkComponentError::BadPath)?
+        //     .to_string();
+        let component = Name::new(asset.iid.clone());
         commands.entity(entity).try_insert(component);
         Ok(())
     }

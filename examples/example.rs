@@ -26,6 +26,7 @@ fn main() {
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle {
         transform: Transform {
+            // good scale for a 1920x1080 canvas/window
             scale: Vec3::splat(0.3),
             ..default()
         },

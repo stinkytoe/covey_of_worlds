@@ -60,14 +60,12 @@ pub struct LayerAsset {
     pub index: usize,
     pub tiles: Vec<TileInstance>,
     #[reflect(ignore)]
-    pub(crate) _project: Handle<ProjectAsset>,
     pub(crate) entity_handles: Vec<Handle<EntityAsset>>,
 }
 
 impl LayerAsset {
     pub(crate) fn new(
         value: &ldtk::LayerInstance,
-        project: Handle<ProjectAsset>,
         index: usize,
         layer_type: LayerType,
         tiles: Vec<TileInstance>,
@@ -98,7 +96,6 @@ impl LayerAsset {
             visible: value.visible,
             index,
             tiles,
-            _project: project,
             entity_handles,
             // entity_assets_by_identifier,
             // entity_assets_by_iid,
@@ -106,7 +103,11 @@ impl LayerAsset {
     }
 }
 
-impl LdtkAsset for LayerAsset {}
+impl LdtkAsset for LayerAsset {
+    fn iid(&self) -> String {
+        self.iid.clone()
+    }
+}
 
 impl LdtkAssetChildLoader<EntityAsset> for LayerAsset {
     fn children(&self) -> Vec<Handle<EntityAsset>> {

@@ -4,14 +4,10 @@ use bevy::render::render_resource::Extent3d;
 use bevy::render::render_resource::TextureDimension;
 use bevy::render::render_resource::TextureFormat;
 use bevy::sprite::Anchor;
-use image::imageops;
 use image::imageops::crop_imm;
 use image::imageops::overlay;
 use image::imageops::resize;
 use image::imageops::FilterType;
-use image::ColorType;
-use image::DynamicImage;
-use image::Pixel;
 use image::RgbaImage;
 use thiserror::Error;
 
@@ -26,6 +22,9 @@ use crate::exports::level_background_position::LevelBackgroundPosition;
 use crate::exports::neighbors::Neighbour;
 use crate::exports::neighbors::NeighbourError;
 use crate::ldtk;
+use crate::system_params::project::LdtkProjectCommands;
+use crate::system_params::project::LdtkProjectCommandsEntityEx;
+use crate::system_params::project::LdtkProjectCommandsEx;
 use crate::util::bevy_color_from_ldtk;
 use crate::util::ColorParseError;
 
@@ -47,6 +46,8 @@ pub enum LevelAssetError {
     BgPosNoneWithBgRelPath,
     #[error("bg_rel_path not found!")]
     BgRelPathNotFound,
+    #[error("Bad Project Iid!")]
+    BadProjectIid,
 }
 
 #[derive(Asset, Debug, Reflect)]
@@ -62,8 +63,7 @@ pub struct LevelAsset {
     // (worldX, worldY, and worldDepth)
     // In Bevy coordinate system, not necessarily the same as Bevy transform!
     pub location: Vec3,
-    #[reflect(ignore)]
-    pub(crate) project: Handle<ProjectAsset>,
+    pub project_iid: String,
     #[reflect(ignore)]
     pub(crate) layer_handles: Vec<Handle<LayerAsset>>,
 }
@@ -71,7 +71,7 @@ pub struct LevelAsset {
 impl LevelAsset {
     pub(crate) fn new(
         value: &ldtk::Level,
-        project: Handle<ProjectAsset>,
+        project_iid: String,
         level_separation: f32,
         layer_handles: Vec<Handle<LayerAsset>>,
     ) -> Result<Self, LevelAssetError> {
@@ -98,7 +98,7 @@ impl LevelAsset {
                 (value.world_depth as f32) * level_separation,
             )
                 .into(),
-            project,
+            project_iid,
             layer_handles,
         })
     }
@@ -106,16 +106,21 @@ impl LevelAsset {
     pub(crate) fn level_bg_system(
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<LevelAsset>>,
-        project_assets: Res<Assets<ProjectAsset>>,
+        // project_assets: Res<Assets<ProjectAsset>>,
+        project_commands: LdtkProjectCommands,
         level_assets: Res<Assets<LevelAsset>>,
         mut image_assets: ResMut<Assets<Image>>,
     ) -> Result<(), LevelAssetError> {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
             let level_asset = level_assets.get(handle).ok_or(LevelAssetError::BadHandle)?;
 
-            let project_asset = project_assets
-                .get(&level_asset.project)
-                .ok_or(LevelAssetError::BadHandle)?;
+            // let project_asset = project_assets
+            //     .get(&level_asset.project)
+            //     .ok_or(LevelAssetError::BadHandle)?;
+            let project_asset = project_commands
+                .iter()
+                .with_iid(&level_asset.project_iid)
+                .ok_or(LevelAssetError::BadProjectIid)?;
 
             match (
                 level_asset.bg_pos.as_ref(),
@@ -154,13 +159,13 @@ impl LevelAsset {
                         .get(bg_rel_path)
                         .ok_or(LevelAssetError::BgRelPathNotFound)?;
 
-                    // FIXME: remove this expect and return a proper Err(..) value
-                    // once bevy 0.14 drops
                     let background_image = image_assets
                         .get(background_handle)
                         .ok_or(LevelAssetError::BadHandle)?
                         .clone()
                         .try_into_dynamic()
+                        // FIXME: remove this expect and return a proper Err(..) value
+                        // once bevy 0.14 drops
                         .expect("a dynamic image");
 
                     let cropped = crop_imm(
@@ -182,31 +187,7 @@ impl LevelAsset {
                         FilterType::Gaussian,
                     );
 
-                    // let background_color = DynamicImage::new(
-                    //     layer_asset.size.x as u32,
-                    //     layer_asset.size.y as u32,
-                    //     ColorType::Rgba8,
-                    // );
                     let color = level_asset.bg_color.as_rgba_u8();
-
-                    // let mut background_color = Image::new_fill(
-                    //     Extent3d {
-                    //         width: layer_asset.size.x as u32,
-                    //         height: layer_asset.size.y as u32,
-                    //         depth_or_array_layers: 1,
-                    //     },
-                    //     TextureDimension::D2,
-                    //     &color,
-                    //     TextureFormat::Rgba8UnormSrgb,
-                    //     RenderAssetUsages::default(),
-                    // );
-
-                    // overlay(
-                    //     &mut background_color.into(),
-                    //     &background_image,
-                    //     bg_pos.top_left.x as i64,
-                    //     bg_pos.top_left.y as i64,
-                    // );
 
                     let mut background_color =
                         RgbaImage::new(level_asset.size.x as u32, level_asset.size.y as u32);
@@ -226,7 +207,6 @@ impl LevelAsset {
 
                     let background_image = Image::from_dynamic(
                         background_color.into(),
-                        // dynamic_image,
                         true,
                         RenderAssetUsages::default(),
                     );
@@ -237,11 +217,6 @@ impl LevelAsset {
                         background_handle,
                         Sprite {
                             anchor: Anchor::TopLeft,
-                            // color: todo!(),
-                            // flip_x: todo!(),
-                            // flip_y: todo!(),
-                            // custom_size: todo!(),
-                            // rect: todo!(),
                             ..default()
                         },
                     ));
@@ -258,7 +233,11 @@ impl LdtkAssetChildLoader<LayerAsset> for LevelAsset {
     }
 }
 
-impl LdtkAsset for LevelAsset {}
+impl LdtkAsset for LevelAsset {
+    fn iid(&self) -> String {
+        self.iid.clone()
+    }
+}
 
 impl LdtkComponent<LevelAsset> for Name {
     fn do_assign(

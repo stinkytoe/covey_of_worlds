@@ -2,6 +2,7 @@ use bevy::asset::AssetLoader;
 use bevy::asset::AsyncReadExt;
 use bevy::asset::ReadAssetBytesError;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use futures_lite::future;
 use serde::Deserialize;
 use serde::Serialize;
@@ -98,7 +99,7 @@ impl AssetLoader for ProjectAssetLoader {
         Box::pin(async move {
             let asset_path = load_context.path().to_path_buf();
 
-            let self_handle = load_context.load(asset_path.clone());
+            // let self_handle = load_context.load(asset_path.clone());
 
             info!("Loading LDtk project file: {asset_path:?}");
 
@@ -198,9 +199,14 @@ impl AssetLoader for ProjectAssetLoader {
                                             let entity_assets = ldtk_layer.entity_instances
                                                 .iter()
                                                 .map(|ldtk_entity| {
-                                                    let label = format!("{}/{}/{}/{}", ldtk_world.identifier, ldtk_level.identifier, ldtk_layer.identifier, ldtk_entity.identifier);
-                                                    let asset = EntityAsset::new(ldtk_entity, self_handle.clone())?;
-                                                    Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                                                    let label = format!("{}/{}/{}/{}@{}",
+                                                        ldtk_world.identifier,
+                                                        ldtk_level.identifier,
+                                                        ldtk_layer.identifier,
+                                                        ldtk_entity.identifier,
+                                                        ldtk_entity.iid);
+                                                    let asset = EntityAsset::new(ldtk_entity )?;
+                                                    Ok(load_context.add_labeled_asset(label, asset))
                                                 })
                                                 .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
@@ -216,14 +222,13 @@ impl AssetLoader for ProjectAssetLoader {
                                 );
                                 let asset = LayerAsset::new(
                                     ldtk_layer,
-                                    self_handle.clone(),
                                     index,
                                     layer_type,
                                     tiles,
                                     entity_handles,
                                     settings.layer_separation,
                                 )?;
-                                Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                                Ok(load_context.add_labeled_asset(label, asset))
                             })
                             .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
@@ -231,17 +236,17 @@ impl AssetLoader for ProjectAssetLoader {
                                 format!("{}/{}", ldtk_world.identifier, ldtk_level.identifier);
                             let asset = LevelAsset::new(
                                 ldtk_level,
-                                self_handle.clone(),
+                                value.iid.clone(),
                                 settings.level_separation,
                                 layer_handles,
                             )?;
-                            Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                            Ok(load_context.add_labeled_asset(label, asset))
                         })
                         .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
                     let label = ldtk_world.identifier.clone();
-                    let asset = WorldAsset::new(ldtk_world, self_handle.clone(), level_handles);
-                    Ok(load_context.add_loaded_labeled_asset(label, asset.into()))
+                    let asset = WorldAsset::new(ldtk_world, level_handles);
+                    Ok(load_context.add_labeled_asset(label, asset))
                 })
                 .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;
 
@@ -269,6 +274,7 @@ impl AssetLoader for ProjectAssetLoader {
                     (ldtk_path.clone(), asset_handle)
                 })
                 .collect();
+
             let layer_defs = value
                 .defs
                 .layers
@@ -310,11 +316,11 @@ impl AssetLoader for ProjectAssetLoader {
                 json_version: value.json_version.clone(),
                 tileset_assets,
                 background_assets,
+                // background_assets: HashMap::default(),
                 layer_defs,
                 entity_defs,
                 tileset_defs,
                 enum_defs,
-                self_handle,
                 world_handles,
             })
         })

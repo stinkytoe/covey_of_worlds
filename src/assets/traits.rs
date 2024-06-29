@@ -1,11 +1,8 @@
-use bevy::asset::LoadState;
 use bevy::prelude::*;
-use bevy::utils::tracing::field::debug;
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Component)]
-pub struct LoadStub;
+use crate::components::iid::Iid;
 
 #[derive(Event)]
 pub struct LdtkAssetLoadEvent<T: LdtkAsset> {
@@ -19,28 +16,46 @@ where
 {
     fn on_create_system(
         mut commands: Commands,
-        query: Query<(Entity, &Handle<Self>), Added<Handle<Self>>>,
+        query: Query<(Entity, &Handle<Self>), Without<Iid>>,
+        assets: Res<Assets<Self>>,
+        asset_server: Res<AssetServer>,
+        mut asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
     ) {
         for (entity, handle) in query.iter() {
-            debug!("EntityAsset added! entity: {entity:?}, handle: {handle:?}");
-            commands.entity(entity).try_insert(LoadStub);
+            if asset_server.is_loaded_with_dependencies(handle) {
+                debug!("LdtkAsset loaded! entity: {entity:?}, handle: {handle:?}");
+
+                let self_asset = assets.get(handle).expect("bad handle?");
+
+                commands.entity(entity).insert(Iid(self_asset.iid()));
+
+                asset_event_writer.send(LdtkAssetLoadEvent {
+                    entity,
+                    handle: handle.clone(),
+                });
+            }
         }
     }
 
     fn on_modified_system(
         mut commands: Commands,
         mut asset_event_reader: EventReader<AssetEvent<Self>>,
+        mut asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
         query: Query<(Entity, &Handle<Self>)>,
     ) {
         for event in asset_event_reader.read() {
             match event {
                 AssetEvent::Added { id } => {
-                    debug!("AssetEvent::Added: {:?}", id);
+                    debug!("AssetEvent::Added: {id:?}");
                 }
                 AssetEvent::Modified { id } => {
                     debug!("AssetEvent::Modified: {id:?}");
-                    for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
-                        commands.entity(entity).try_insert(LoadStub);
+
+                    for (entity, handle) in query.iter().filter(|(_, handle)| handle.id() == *id) {
+                        asset_event_writer.send(LdtkAssetLoadEvent {
+                            entity,
+                            handle: handle.clone(),
+                        });
                     }
                 }
                 AssetEvent::Removed { id } => {
@@ -53,33 +68,10 @@ where
                     debug!("AssetEvent::LoadedWithDependencies: {id:?}");
                 }
             }
-            // if let AssetEvent::Modified { id } = event {
-            //     for (entity, _) in query.iter().filter(|(_, handle)| handle.id() == *id) {
-            //         commands.entity(entity).try_insert(LoadStub);
-            //     }
-            // };
         }
     }
 
-    fn with_load_stub_system(
-        mut commands: Commands,
-        query: Query<(Entity, &Handle<Self>), With<LoadStub>>,
-        asset_server: Res<AssetServer>,
-        mut ldtk_asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
-    ) {
-        for (entity, handle) in query.iter() {
-            if let Some(LoadState::Loaded) = asset_server.get_load_state(handle) {
-                debug!("EntityAsset finished loading! entity: {entity:?}, handle: {handle:?}");
-
-                commands.entity(entity).remove::<LoadStub>();
-
-                ldtk_asset_event_writer.send(LdtkAssetLoadEvent {
-                    entity,
-                    handle: handle.clone(),
-                });
-            }
-        }
-    }
+    fn iid(&self) -> String;
 }
 
 #[derive(Debug, Error)]
@@ -96,28 +88,46 @@ where
     fn load_children_system(
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<Self>>,
-        children_query: Query<(Entity, &Handle<Child>)>,
+        children_query: Query<(Entity, &Handle<Child>, &Iid), With<Iid>>,
         self_assets: Res<Assets<Self>>,
+        child_assets: Res<Assets<Child>>,
     ) -> Result<(), LdtkAssetChildLoaderError> {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
+            debug!("Loading Children for: {entity:?}");
             let mut children = self_assets
                 .get(handle)
                 .ok_or(LdtkAssetChildLoaderError::BadHandle)?
                 .children();
 
-            for (entity, handle) in children_query.iter() {
-                if !children.contains(handle) {
-                    commands.entity(entity).despawn_recursive();
-                } else {
-                    children.retain(|inner_handle| inner_handle != handle);
-                }
-            }
+            // child iid matches an entity: ignore
 
-            commands.entity(*entity).with_children(|parent| {
-                for handle in children.iter() {
-                    parent.spawn(handle.clone());
-                }
-            });
+            // child matches no entity iid: spawn
+            children
+                .iter()
+                .filter(|child| {
+                    let child_asset = child_assets.get(*child).expect("bad handle?");
+                    !children_query
+                        .iter()
+                        .any(|(_, _, iid)| child_asset.iid() == iid.0)
+                })
+                .for_each(|child| {
+                    commands.entity(*entity).with_children(|parent| {
+                        parent.spawn(child.clone());
+                    });
+                });
+
+            // entity has no child with iid: push to_despawn
+            children_query
+                .iter()
+                .filter(|(_, _, iid)| {
+                    !children.iter().any(|child| {
+                        let child_asset = child_assets.get(child).expect("bad handle?");
+                        child_asset.iid() == iid.0
+                    })
+                })
+                .for_each(|(entity, _, _)| {
+                    commands.entity(entity).despawn();
+                });
         }
 
         Ok(())

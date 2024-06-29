@@ -42,14 +42,14 @@ pub struct EntityAsset {
     pub size: Vec2,
     pub iid: String,
     pub location: Vec2,
-    #[reflect(ignore)]
-    pub project: Handle<ProjectAsset>,
+    // #[reflect(ignore)]
+    // pub project: Handle<ProjectAsset>,
 }
 
 impl EntityAsset {
     pub(crate) fn new(
         value: &ldtk::EntityInstance,
-        project: Handle<ProjectAsset>,
+        // project: Handle<ProjectAsset>,
     ) -> Result<Self, EntityAssetError> {
         Ok(Self {
             grid: (value.grid[0], value.grid[1]).into(),
@@ -74,12 +74,29 @@ impl EntityAsset {
             size: (value.width as f32, value.height as f32).into(),
             iid: value.iid.clone(),
             location: (value.px[0] as f32, -value.px[1] as f32).into(),
-            project,
+            // project,
         })
     }
 }
 
-impl LdtkAsset for EntityAsset {}
+impl LdtkAsset for EntityAsset {
+    fn iid(&self) -> String {
+        self.iid.clone()
+    }
+}
+
+impl LdtkComponent<EntityAsset> for Name {
+    fn do_assign(
+        commands: &mut Commands,
+        entity: Entity,
+        _: &mut Query<&mut Self>,
+        asset: &EntityAsset,
+    ) -> Result<(), crate::components::traits::LdtkComponentError> {
+        let component = Name::new(asset.identifier.clone());
+        commands.entity(entity).try_insert(component);
+        Ok(())
+    }
+}
 
 impl LdtkComponent<EntityAsset> for Iid {
     fn do_assign(

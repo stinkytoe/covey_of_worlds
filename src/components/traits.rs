@@ -20,7 +20,7 @@ where
     A: LdtkAsset,
     Self: Component + Debug + Sized,
 {
-    fn on_ldtk_asset_event_system(
+    fn ldtk_asset_event(
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<A>>,
         mut query: Query<&mut Self>,

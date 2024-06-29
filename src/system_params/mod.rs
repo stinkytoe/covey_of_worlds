@@ -1,9 +1,2 @@
-// use bevy::ecs::system::SystemParam;
-// use bevy::prelude::*;
+pub mod project;
 
-// #[derive(SystemParam)]
-// pub struct LdtkProjectCommands<'w, 's> {
-//     commands: Commands<'w, 's>,
-// }
-//
-// impl<'w, 's> LdtkProjectCommands<'w, 's> {}

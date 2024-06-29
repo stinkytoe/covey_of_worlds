@@ -11,7 +11,7 @@
 	"iid": "d5ab0640-8990-11ee-a83b-7da29036a93f",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 335,
+	"nextUid": 337,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -2427,37 +2427,33 @@
 							"__tags": ["player"],
 							"__tile": { "tilesetUid": 288, "x": 8, "y": 8, "w": 16, "h": 16 },
 							"__smartColor": "#BE4A2F",
-							"iid": "171b0c90-fec0-11ee-a832-33fc14a1ff03",
+							"iid": "036861a0-25d0-11ef-bafe-9b6d09a006ae",
 							"width": 16,
 							"height": 16,
 							"defUid": 287,
 							"px": [120,136],
 							"fieldInstances": [
-								{ "__identifier": "Swing", "__type": "Tile", "__value": { "tilesetUid": 288, "x": 32, "y": 64, "w": 32, "h": 32 }, "__tile": null, "defUid": 329, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["32,64,32,32"]
-								}] },
-								{ "__identifier": "Swing2", "__type": "Array<Tile>", "__value": [
-									{ "tilesetUid": 288, "x": 0, "y": 64, "w": 32, "h": 32 },
-									{ "tilesetUid": 288, "x": 32, "y": 64, "w": 32, "h": 32 },
-									{ "tilesetUid": 288, "x": 64, "y": 64, "w": 32, "h": 32 },
-									{ "tilesetUid": 288, "x": 96, "y": 64, "w": 32, "h": 32 }
-								], "__tile": null, "defUid": 332, "realEditorValues": [ {
-									"id": "V_String",
-									"params": ["0,64,32,32"]
-								}, {
-									"id": "V_String",
-									"params": ["32,64,32,32"]
-								}, {
-									"id": "V_String",
-									"params": ["64,64,32,32"]
-								}, {
-									"id": "V_String",
-									"params": ["96,64,32,32"]
-								} ] }
+								{ "__identifier": "Swing", "__type": "Tile", "__value": { "tilesetUid": 288, "x": 24, "y": 56, "w": 48, "h": 32 }, "__tile": null, "defUid": 329, "realEditorValues": [] },
+								{ "__identifier": "Swing2", "__type": "Array<Tile>", "__value": [], "__tile": null, "defUid": 332, "realEditorValues": [] }
 							],
 							"__worldX": -136,
 							"__worldY": 8
+						},
+						{
+							"__identifier": "Thief",
+							"__grid": [8,11],
+							"__pivot": [0.5,0.5],
+							"__tags": [],
+							"__tile": { "tilesetUid": 303, "x": 8, "y": 8, "w": 16, "h": 16 },
+							"__smartColor": "#D77643",
+							"iid": "47205270-25d0-11ef-bafe-05b804b5f562",
+							"width": 16,
+							"height": 16,
+							"defUid": 302,
+							"px": [136,184],
+							"fieldInstances": [],
+							"__worldX": -120,
+							"__worldY": 56
 						}
 					]
 				},
