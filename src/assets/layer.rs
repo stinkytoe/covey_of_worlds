@@ -1,5 +1,6 @@
 use bevy::math::I64Vec2;
 use bevy::prelude::*;
+use bevy::sprite::Mesh2d;
 use bevy::sprite::Mesh2dHandle;
 use thiserror::Error;
 
@@ -128,7 +129,7 @@ impl LayerAsset {
         mut commands: Commands,
         project_commands: LdtkProjectCommands,
         query: Query<(Entity, &Handle<LayerAsset>, &Tiles), Changed<Tiles>>,
-        mut removed: RemovedComponents<Tiles>,
+        mut removed_tiles: RemovedComponents<Tiles>,
         layer_assets: Res<Assets<LayerAsset>>,
         mut images: ResMut<Assets<Image>>,
         mut meshes: ResMut<Assets<Mesh>>,
@@ -188,10 +189,11 @@ impl LayerAsset {
             commands.entity(entity).insert((mesh, material));
         }
 
-        removed.read().for_each(|removed_entity| {
-            commands.entity(removed_entity).remove::<Handle<Image>>();
+        removed_tiles.read().for_each(|entity| {
+            commands.entity(entity).remove::<Handle<Image>>();
             commands
-                .entity(removed_entity)
+                .entity(entity)
+                .remove::<Handle<Mesh>>()
                 .remove::<Handle<ColorMaterial>>();
         });
 
