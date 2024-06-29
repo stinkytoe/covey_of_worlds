@@ -12,7 +12,6 @@ use image::RgbaImage;
 use thiserror::Error;
 
 use crate::assets::layer::LayerAsset;
-use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
 use crate::assets::traits::LdtkAssetChildLoader;
 use crate::components::iid::Iid;
@@ -23,7 +22,6 @@ use crate::exports::neighbors::Neighbour;
 use crate::exports::neighbors::NeighbourError;
 use crate::ldtk;
 use crate::system_params::project::LdtkProjectCommands;
-use crate::system_params::project::LdtkProjectCommandsEntityEx;
 use crate::system_params::project::LdtkProjectCommandsEx;
 use crate::util::bevy_color_from_ldtk;
 use crate::util::ColorParseError;

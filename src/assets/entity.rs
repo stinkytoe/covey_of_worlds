@@ -3,7 +3,6 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use thiserror::Error;
 
-use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
 use crate::components::iid::Iid;
 use crate::components::tileset_rectangle::TilesetRectangle;

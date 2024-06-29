@@ -2,7 +2,6 @@ use bevy::math::I64Vec2;
 use bevy::prelude::*;
 
 use crate::assets::level::LevelAsset;
-use crate::assets::project::ProjectAsset;
 use crate::assets::traits::LdtkAsset;
 use crate::assets::traits::LdtkAssetChildLoader;
 use crate::components::iid::Iid;

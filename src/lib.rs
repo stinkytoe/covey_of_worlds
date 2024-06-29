@@ -10,7 +10,8 @@ pub mod prelude {
     pub use crate::assets::project::ProjectAsset;
     pub use crate::plugin::CoveyOfWorldsPlugin;
     pub use crate::system_params::project::LdtkProjectCommands;
-    // pub use crate::system_params::LdtkProjectCommands;
+    pub use crate::system_params::project::LdtkProjectCommandsEntityEx;
+    pub use crate::system_params::project::LdtkProjectCommandsEx;
 }
 
 mod assets;

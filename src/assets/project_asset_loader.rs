@@ -2,7 +2,6 @@ use bevy::asset::AssetLoader;
 use bevy::asset::AsyncReadExt;
 use bevy::asset::ReadAssetBytesError;
 use bevy::prelude::*;
-use bevy::utils::HashMap;
 use futures_lite::future;
 use serde::Deserialize;
 use serde::Serialize;

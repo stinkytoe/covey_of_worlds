@@ -38,7 +38,7 @@ where
     }
 
     fn on_modified_system(
-        mut commands: Commands,
+        // mut commands: Commands,
         mut asset_event_reader: EventReader<AssetEvent<Self>>,
         mut asset_event_writer: EventWriter<LdtkAssetLoadEvent<Self>>,
         query: Query<(Entity, &Handle<Self>)>,
@@ -88,13 +88,13 @@ where
     fn load_children_system(
         mut commands: Commands,
         mut events: EventReader<LdtkAssetLoadEvent<Self>>,
-        children_query: Query<(Entity, &Handle<Child>, &Iid), With<Iid>>,
+        children_query: Query<(Entity, &Iid), With<Handle<Child>>>,
         self_assets: Res<Assets<Self>>,
         child_assets: Res<Assets<Child>>,
     ) -> Result<(), LdtkAssetChildLoaderError> {
         for LdtkAssetLoadEvent { entity, handle } in events.read() {
             debug!("Loading Children for: {entity:?}");
-            let mut children = self_assets
+            let children = self_assets
                 .get(handle)
                 .ok_or(LdtkAssetChildLoaderError::BadHandle)?
                 .children();
@@ -108,7 +108,7 @@ where
                     let child_asset = child_assets.get(*child).expect("bad handle?");
                     !children_query
                         .iter()
-                        .any(|(_, _, iid)| child_asset.iid() == iid.0)
+                        .any(|(_, iid)| child_asset.iid() == iid.0)
                 })
                 .for_each(|child| {
                     commands.entity(*entity).with_children(|parent| {
@@ -116,17 +116,19 @@ where
                     });
                 });
 
-            // entity has no child with iid: push to_despawn
+            // entity has no child with iid: despawn
             children_query
                 .iter()
-                .filter(|(_, _, iid)| {
+                .filter(|(_, iid)| {
                     !children.iter().any(|child| {
                         let child_asset = child_assets.get(child).expect("bad handle?");
                         child_asset.iid() == iid.0
                     })
                 })
-                .for_each(|(entity, _, _)| {
-                    commands.entity(entity).despawn();
+                .for_each(|(entity, _)| {
+                    let mut ec = commands.entity(entity);
+                    // ec.remove_parent();
+                    ec.despawn();
                 });
         }
 
