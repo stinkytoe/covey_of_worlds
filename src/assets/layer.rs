@@ -1,6 +1,5 @@
 use bevy::math::I64Vec2;
 use bevy::prelude::*;
-use bevy::sprite::Mesh2d;
 use bevy::sprite::Mesh2dHandle;
 use thiserror::Error;
 
@@ -107,7 +106,6 @@ impl LayerAsset {
             layer_def_uid: value.layer_def_uid,
             level_id: value.level_id,
             override_tileset_uid: value.override_tileset_uid,
-            // px_offset: (value.px_offset_x, -value.px_offset_y).into(),
             location: (
                 value.px_offset_x as f32,
                 -value.px_offset_y as f32,
@@ -119,8 +117,6 @@ impl LayerAsset {
             tiles,
             entity_handles,
             project_iid,
-            // entity_assets_by_identifier,
-            // entity_assets_by_iid,
         })
     }
 
@@ -143,14 +139,9 @@ impl LayerAsset {
                 .with_iid(&layer_asset.project_iid)
                 .ok_or(LayerAssetError::BadIid)?;
 
-            let mut delete_stub = || {
+            let Some(tileset_rel_path) = layer_asset.tileset_rel_path.as_ref() else {
                 commands.entity(entity).remove::<Mesh2dHandle>();
                 commands.entity(entity).remove::<Handle<ColorMaterial>>();
-            };
-
-            let Some(tileset_rel_path) = layer_asset.tileset_rel_path.as_ref() else {
-                debug!("no tileset_rel_path");
-                delete_stub();
                 return Ok(());
             };
 
@@ -190,9 +181,9 @@ impl LayerAsset {
         }
 
         removed_tiles.read().for_each(|entity| {
-            commands.entity(entity).remove::<Handle<Image>>();
             commands
                 .entity(entity)
+                .remove::<Handle<Image>>()
                 .remove::<Handle<Mesh>>()
                 .remove::<Handle<ColorMaterial>>();
         });
