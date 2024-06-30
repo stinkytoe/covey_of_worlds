@@ -98,8 +98,6 @@ impl AssetLoader for ProjectAssetLoader {
         Box::pin(async move {
             let asset_path = load_context.path().to_path_buf();
 
-            // let self_handle = load_context.load(asset_path.clone());
-
             info!("Loading LDtk project file: {asset_path:?}");
 
             let base_directory = asset_path
@@ -204,7 +202,7 @@ impl AssetLoader for ProjectAssetLoader {
                                                         ldtk_layer.identifier,
                                                         ldtk_entity.identifier,
                                                         ldtk_entity.iid);
-                                                    let asset = EntityAsset::new(ldtk_entity )?;
+                                                    let asset = EntityAsset::new(ldtk_entity, value.iid.clone())?;
                                                     Ok(load_context.add_labeled_asset(label, asset))
                                                 })
                                                 .collect::<Result<Vec<_>, ProjectAssetLoaderError>>()?;

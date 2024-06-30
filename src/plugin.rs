@@ -102,9 +102,11 @@ impl Plugin for CoveyOfWorldsPlugin {
                 (
                     <Name as LdtkComponent<EntityAsset>>::ldtk_asset_event.map(error),
                     <Iid as LdtkComponent<EntityAsset>>::ldtk_asset_event.map(error),
+                    <Transform as LdtkComponent<EntityAsset>>::ldtk_asset_event.map(error),
                     <TilesetRectangle as LdtkComponent<EntityAsset>>::ldtk_asset_event.map(error),
                     EntityAsset::on_create_system,
                     EntityAsset::on_modified_system,
+                    EntityAsset::entity_tile_system.map(error),
                 ),
             );
     }
